@@ -91,10 +91,25 @@ func (c *CurrencyRatesRepository) GetCurrencyRateByDate(source, target currency.
 			return 0, err
 		}
 
-		c.data[date] = make(currency.Rates)
+		err = c.db.Update(func(tx *bbolt.Tx) error {
+			bucket := tx.Bucket(CurrencyRatesBucket)
 
-		for code, rate := range rates.Rates {
-			c.data[date][code] = rate
+			c.data[date] = make(currency.Rates)
+
+			for code, rate := range rates.Rates {
+				c.data[date][code] = rate
+			}
+
+			data, err := json.Marshal(c.data)
+			if err != nil {
+				return err
+			}
+
+			return bucket.Put([]byte(date.String()), data)
+		})
+
+		if err != nil {
+			return 0, err
 		}
 	}
 

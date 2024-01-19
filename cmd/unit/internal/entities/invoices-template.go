@@ -28,7 +28,8 @@ type InvoiceTemplate struct {
 
 	ContactID uint64 `json:"contact_id"`
 
-	Date      datetime.DateTime `json:"date"`
-	CreatedAt datetime.DateTime `json:"created_at"`
-	UpdateAt  datetime.DateTime `json:"updated_at"`
+	Date      datetime.DateTime  `json:"date"`
+	DeletedAt *datetime.DateTime `json:"delete_at"`
+	CreatedAt datetime.DateTime  `json:"created_at"`
+	UpdateAt  datetime.DateTime  `json:"updated_at"`
 }

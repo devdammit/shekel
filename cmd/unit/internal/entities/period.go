@@ -9,10 +9,10 @@ import (
 type Period struct {
 	ID uint64 `json:"id"`
 
-	CreatedAt datetime.Time  `json:"created_at"`
-	ClosedAt  *datetime.Time `json:"closed_at"`
+	CreatedAt datetime.DateTime  `json:"created_at"`
+	ClosedAt  *datetime.DateTime `json:"closed_at"`
 }
 
 func (p *Period) Close() {
-	p.ClosedAt = pointer.ToDateTime(time.Now())
+	p.ClosedAt = pointer.Ptr(datetime.NewDateTime(time.Now()))
 }

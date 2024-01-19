@@ -1,6 +1,7 @@
 package bbolt
 
 import (
+	"context"
 	"github.com/devdammit/shekel/internal/resources"
 	"go.etcd.io/bbolt"
 )
@@ -15,7 +16,7 @@ func NewTransactor(db *resources.Bolt) *Transactor {
 	}
 }
 
-func (d *Transactor) Transaction(fn func() error) error {
+func (d *Transactor) Transaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	tx, err := d.db.Begin(true)
 	if err != nil {
 		return err
@@ -28,7 +29,7 @@ func (d *Transactor) Transaction(fn func() error) error {
 		}
 	}(tx)
 
-	err = fn()
+	err = fn(ctx)
 	if err != nil {
 		return err
 	}

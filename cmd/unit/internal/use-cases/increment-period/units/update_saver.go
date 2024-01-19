@@ -10,7 +10,7 @@ type AccountsRepository interface {
 }
 
 type Transactor interface {
-	Transaction(fn func() error) error
+	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type ResultSaver struct {
@@ -35,7 +35,7 @@ func (u *ResultSaver) Handle(ctx context.Context, _ *Request, payload *Payload) 
 		return nil, ErrPayloadCheckFailed
 	}
 
-	err := u.db.Transaction(func() error {
+	err := u.db.Transaction(ctx, func(ctx context.Context) error {
 		err := u.accountsRepo.ButchUpdate(ctx, payload.Accounts)
 		if err != nil {
 			return err

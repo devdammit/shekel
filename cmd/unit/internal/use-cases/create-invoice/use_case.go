@@ -16,12 +16,38 @@ type InvoicesRepository interface {
 	BulkCreate(ctx context.Context, invoices []entities.Invoice) ([]entities.Invoice, error)
 }
 
+type PeriodsRepository interface {
+	GetLast(ctx context.Context) (*entities.Period, error)
+}
+
 type UseCase struct {
 	invoices InvoicesRepository
 	service  InvoicesService
+	periods  PeriodsRepository
+}
+
+func NewUseCase(invoices InvoicesRepository, service InvoicesService, periods PeriodsRepository) *UseCase {
+	return &UseCase{
+		invoices: invoices,
+		service:  service,
+		periods:  periods,
+	}
 }
 
 func (u *UseCase) Execute(ctx context.Context, request port.CreateInvoiceRequest) error {
+	period, err := u.periods.GetLast(ctx)
+	if err != nil {
+		return err
+	}
+
+	if period.ClosedAt != nil {
+		return errors.New("cannot create invoice at closed period")
+	}
+
+	if request.Date.Time.Before(period.CreatedAt.Time) {
+		return errors.New("cannot create invoice before current period")
+	}
+
 	template := entities.InvoiceTemplate{
 		Name:      request.Name,
 		Desc:      request.Description,
@@ -30,14 +56,16 @@ func (u *UseCase) Execute(ctx context.Context, request port.CreateInvoiceRequest
 		ContactID: request.ContactID,
 
 		Date: request.Date,
+	}
 
-		RepeatPlanner: &entities.RepeatPlanner{
+	if request.Plan != nil {
+		template.RepeatPlanner = &entities.RepeatPlanner{
 			Interval:      request.Plan.Interval,
 			IntervalCount: request.Plan.IntervalCount,
 			DaysOfWeek:    request.Plan.DaysOfWeek,
 			EndDate:       request.Plan.EndDate,
 			EndCount:      request.Plan.EndCount,
-		},
+		}
 	}
 
 	invoices, err := u.service.GetScheduledInvoices(ctx, template)
@@ -58,6 +86,10 @@ func (u *UseCase) Execute(ctx context.Context, request port.CreateInvoiceRequest
 
 	for _, invoice := range invoices {
 		invoice.Template = &template
+	}
+
+	if len(invoices) == 1 {
+		invoices[0].Template = nil
 	}
 
 	_, err = u.invoices.BulkCreate(ctx, invoices)

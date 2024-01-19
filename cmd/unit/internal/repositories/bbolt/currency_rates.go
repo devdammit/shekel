@@ -20,14 +20,18 @@ var SupportedCurrencies = []currency.Code{
 	currency.RUB,
 }
 
+type OpenExchangeRatesAPI interface {
+	GetByDate(base currency.Code, symbols []currency.Code, date datetime.Date) (*openexchange.HistoricalRates, error)
+}
+
 type CurrencyRatesRepository struct {
-	api *openexchange.Client
+	api OpenExchangeRatesAPI
 	db  *resources.Bolt
 
 	data map[datetime.Date]currency.Rates
 }
 
-func NewCurrencyRatesRepository(bolt *resources.Bolt, api *openexchange.Client) *CurrencyRatesRepository {
+func NewCurrencyRatesRepository(bolt *resources.Bolt, api OpenExchangeRatesAPI) *CurrencyRatesRepository {
 	return &CurrencyRatesRepository{
 		api:  api,
 		db:   bolt,
@@ -56,7 +60,7 @@ func (c *CurrencyRatesRepository) Start() error {
 	}
 
 	return c.db.View(func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket([]byte("root")).Bucket([]byte("menu"))
+		bucket := tx.Bucket(resources.BoltRootBucket).Bucket(CurrencyRatesBucket)
 
 		err = bucket.ForEach(func(k, v []byte) error {
 			var data map[datetime.Date]currency.Rates
@@ -92,7 +96,7 @@ func (c *CurrencyRatesRepository) GetCurrencyRateByDate(source, target currency.
 		}
 
 		err = c.db.Update(func(tx *bbolt.Tx) error {
-			bucket := tx.Bucket(CurrencyRatesBucket)
+			bucket := tx.Bucket(resources.BoltRootBucket).Bucket(CurrencyRatesBucket)
 
 			c.data[date] = make(currency.Rates)
 

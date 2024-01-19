@@ -5,15 +5,17 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-type Database struct {
+type Transactor struct {
 	db *resources.Bolt
 }
 
-func NewDatabase(db *resources.Bolt) *Database {
-	return &Database{db: db}
+func NewTransactor(db *resources.Bolt) *Transactor {
+	return &Transactor{
+		db: db,
+	}
 }
 
-func (d *Database) Transaction(fn func() error) error {
+func (d *Transactor) Transaction(fn func() error) error {
 	tx, err := d.db.Begin(true)
 	if err != nil {
 		return err

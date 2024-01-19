@@ -9,14 +9,14 @@ type AccountsRepository interface {
 	ButchUpdate(ctx context.Context, accounts []entities.Account) error
 }
 
-type Database interface {
+type Transactor interface {
 	Transaction(fn func() error) error
 }
 
 type ResultSaver struct {
 	accountsRepo AccountsRepository
 	periodsRepo  PeriodsRepository
-	db           Database
+	db           Transactor
 }
 
 func NewResultSaver(accountsRepo AccountsRepository, periodsRepo PeriodsRepository) *ResultSaver {
@@ -30,7 +30,7 @@ func (u *ResultSaver) GetName() string {
 	return "period_closer"
 }
 
-func (u *ResultSaver) Handle(ctx context.Context, request *Request, payload *Payload) (*Payload, error) {
+func (u *ResultSaver) Handle(ctx context.Context, _ *Request, payload *Payload) (*Payload, error) {
 	if payload == nil || payload.ActivePeriod == nil || payload.Accounts == nil {
 		return nil, ErrPayloadCheckFailed
 	}

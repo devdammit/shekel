@@ -12,8 +12,8 @@ package mocks
 import (
 	reflect "reflect"
 
-	open_exchange "github.com/devdammit/shekel/cmd/unit/internal/ports/apis/open-exchange"
 	currency "github.com/devdammit/shekel/pkg/currency"
+	open_exchange "github.com/devdammit/shekel/pkg/open-exchange"
 	datetime "github.com/devdammit/shekel/pkg/types/datetime"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -42,16 +42,16 @@ func (m *MockOpenExchangeRatesAPI) EXPECT() *MockOpenExchangeRatesAPIMockRecorde
 }
 
 // GetByDate mocks base method.
-func (m *MockOpenExchangeRatesAPI) GetByDate(base currency.Code, codes []currency.Code, date datetime.Date) (*open_exchange.HistoricalRates, error) {
+func (m *MockOpenExchangeRatesAPI) GetByDate(base currency.Code, symbols []currency.Code, date datetime.Date) (*open_exchange.HistoricalRates, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByDate", base, codes, date)
+	ret := m.ctrl.Call(m, "GetByDate", base, symbols, date)
 	ret0, _ := ret[0].(*open_exchange.HistoricalRates)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByDate indicates an expected call of GetByDate.
-func (mr *MockOpenExchangeRatesAPIMockRecorder) GetByDate(base, codes, date any) *gomock.Call {
+func (mr *MockOpenExchangeRatesAPIMockRecorder) GetByDate(base, symbols, date any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByDate", reflect.TypeOf((*MockOpenExchangeRatesAPI)(nil).GetByDate), base, codes, date)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByDate", reflect.TypeOf((*MockOpenExchangeRatesAPI)(nil).GetByDate), base, symbols, date)
 }

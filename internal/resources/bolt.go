@@ -52,3 +52,28 @@ func Itob(v int) []byte {
 	binary.BigEndian.PutUint64(b, uint64(v))
 	return b
 }
+
+func (d *Bolt) Transaction(fn func() error) error {
+	tx, err := d.Begin(true)
+	if err != nil {
+		return err
+	}
+
+	defer func(tx *bbolt.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+			panic(err)
+		}
+	}(tx)
+
+	err = fn()
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}

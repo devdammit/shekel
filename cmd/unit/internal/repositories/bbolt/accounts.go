@@ -21,16 +21,14 @@ type data struct {
 
 type AccountsRepository struct {
 	db   *resources.Bolt
-	data data
+	data map[uint64]entities.Account
+	mu   sync.RWMutex
 }
 
 func NewAccountsRepository(bolt *resources.Bolt) *AccountsRepository {
 	return &AccountsRepository{
-		db: bolt,
-		data: data{
-			val: make(map[uint64]entities.Account),
-			mu:  sync.RWMutex{},
-		},
+		db:   bolt,
+		data: make(map[uint64]entities.Account),
 	}
 }
 
@@ -63,10 +61,10 @@ func (r *AccountsRepository) Start() error {
 				return fmt.Errorf("failed to unmarshal account: %w", err)
 			}
 
-			r.data.mu.Lock()
-			defer r.data.mu.Unlock()
+			r.mu.Lock()
+			defer r.mu.Unlock()
 
-			r.data.val[account.ID] = account
+			r.data[account.ID] = account
 
 			return nil
 		})
@@ -75,7 +73,7 @@ func (r *AccountsRepository) Start() error {
 			return err
 		}
 
-		log.Info("accounts loaded", log.Int("count", len(r.data.val)))
+		log.Info("accounts loaded", log.Int("count", len(r.data)))
 
 		return nil
 	})
@@ -85,15 +83,15 @@ func (r *AccountsRepository) Create(account *entities.Account) (*entities.Accoun
 	err := r.db.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(resources.BoltRootBucket).Bucket(AccountsBucket)
 
-		r.data.mu.RLock()
-		defer r.data.mu.RUnlock()
+		r.mu.Lock()
+		defer r.mu.Unlock()
 
-		for _, a := range r.data.val {
+		for _, a := range r.data {
 			if a.Name == account.Name {
 				return entities.ErrorAccountExists
 			}
 		}
-		
+
 		newID, _ := bucket.NextSequence()
 		account.ID = newID
 
@@ -103,14 +101,13 @@ func (r *AccountsRepository) Create(account *entities.Account) (*entities.Accoun
 			return fmt.Errorf("failed to marshal: %w", err)
 		}
 
-		key := make([]byte, 8)
-		binary.BigEndian.PutUint64(key, account.ID)
-
-		err = bucket.Put(key, data)
+		err = bucket.Put(resources.Itob(int(account.ID)), data)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to put in bucket: %w", err)
 		}
+
+		r.data[account.ID] = *account
 
 		return nil
 	})

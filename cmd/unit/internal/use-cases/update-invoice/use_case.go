@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
 	port "github.com/devdammit/shekel/cmd/unit/internal/ports/use-cases"
+	"github.com/devdammit/shekel/pkg/log"
 )
 
 type PeriodsRepository interface {
@@ -36,6 +37,14 @@ type Transactor interface {
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
+type CalendarService interface {
+	Sync(ctx context.Context) error
+}
+
+type Logger interface {
+	Warn(ctx context.Context, fields ...log.Field)
+}
+
 type UpdateInvoiceUseCase struct {
 	periods    PeriodsRepository
 	invoices   InvoicesRepository
@@ -43,9 +52,11 @@ type UpdateInvoiceUseCase struct {
 	contacts   ContactsRepository
 	transactor Transactor
 	service    InvoicesService
+	calendar   CalendarService
+	logger     Logger
 }
 
-func NewUpdateInvoiceUseCase(periods PeriodsRepository, invoices InvoicesRepository, templates InvoicesTemplateRepository, contacts ContactsRepository, transactor Transactor, service InvoicesService) *UpdateInvoiceUseCase {
+func NewUpdateInvoiceUseCase(periods PeriodsRepository, invoices InvoicesRepository, templates InvoicesTemplateRepository, contacts ContactsRepository, transactor Transactor, service InvoicesService, calendar CalendarService, logger Logger) *UpdateInvoiceUseCase {
 	return &UpdateInvoiceUseCase{
 		periods:    periods,
 		invoices:   invoices,
@@ -53,6 +64,8 @@ func NewUpdateInvoiceUseCase(periods PeriodsRepository, invoices InvoicesReposit
 		contacts:   contacts,
 		transactor: transactor,
 		service:    service,
+		calendar:   calendar,
+		logger:     logger,
 	}
 }
 
@@ -101,6 +114,11 @@ func (u *UpdateInvoiceUseCase) Execute(ctx context.Context, req *port.UpdateInvo
 		_, err := u.invoices.Update(ctx, invoice)
 		if err != nil {
 			return err
+		}
+
+		err = u.calendar.Sync(ctx)
+		if err != nil {
+			u.logger.Warn(ctx, log.Err(err), log.String("message", "cannot sync calendar"))
 		}
 
 		return nil
@@ -168,6 +186,11 @@ func (u *UpdateInvoiceUseCase) Execute(ctx context.Context, req *port.UpdateInvo
 
 	if err != nil {
 		return err
+	}
+
+	err = u.calendar.Sync(ctx)
+	if err != nil {
+		u.logger.Warn(ctx, log.Err(err), log.String("message", "cannot sync calendar"))
 	}
 
 	return nil

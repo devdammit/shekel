@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	entities "github.com/devdammit/shekel/cmd/unit/internal/entities"
+	log "github.com/devdammit/shekel/pkg/log"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -315,4 +316,81 @@ func (m *MockTransactor) Transaction(ctx context.Context, fn func(context.Contex
 func (mr *MockTransactorMockRecorder) Transaction(ctx, fn any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Transaction", reflect.TypeOf((*MockTransactor)(nil).Transaction), ctx, fn)
+}
+
+// MockCalendarService is a mock of CalendarService interface.
+type MockCalendarService struct {
+	ctrl     *gomock.Controller
+	recorder *MockCalendarServiceMockRecorder
+}
+
+// MockCalendarServiceMockRecorder is the mock recorder for MockCalendarService.
+type MockCalendarServiceMockRecorder struct {
+	mock *MockCalendarService
+}
+
+// NewMockCalendarService creates a new mock instance.
+func NewMockCalendarService(ctrl *gomock.Controller) *MockCalendarService {
+	mock := &MockCalendarService{ctrl: ctrl}
+	mock.recorder = &MockCalendarServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCalendarService) EXPECT() *MockCalendarServiceMockRecorder {
+	return m.recorder
+}
+
+// Sync mocks base method.
+func (m *MockCalendarService) Sync(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Sync", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Sync indicates an expected call of Sync.
+func (mr *MockCalendarServiceMockRecorder) Sync(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sync", reflect.TypeOf((*MockCalendarService)(nil).Sync), ctx)
+}
+
+// MockLogger is a mock of Logger interface.
+type MockLogger struct {
+	ctrl     *gomock.Controller
+	recorder *MockLoggerMockRecorder
+}
+
+// MockLoggerMockRecorder is the mock recorder for MockLogger.
+type MockLoggerMockRecorder struct {
+	mock *MockLogger
+}
+
+// NewMockLogger creates a new mock instance.
+func NewMockLogger(ctrl *gomock.Controller) *MockLogger {
+	mock := &MockLogger{ctrl: ctrl}
+	mock.recorder = &MockLoggerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockLogger) EXPECT() *MockLoggerMockRecorder {
+	return m.recorder
+}
+
+// Warn mocks base method.
+func (m *MockLogger) Warn(ctx context.Context, fields ...log.Field) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range fields {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "Warn", varargs...)
+}
+
+// Warn indicates an expected call of Warn.
+func (mr *MockLoggerMockRecorder) Warn(ctx any, fields ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, fields...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Warn", reflect.TypeOf((*MockLogger)(nil).Warn), varargs...)
 }

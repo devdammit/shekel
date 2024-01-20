@@ -2,10 +2,12 @@ package update_invoice_test
 
 import (
 	"context"
+	"errors"
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
 	mocks "github.com/devdammit/shekel/cmd/unit/internal/mocks/use-cases/update-invoice"
 	port "github.com/devdammit/shekel/cmd/unit/internal/ports/use-cases"
 	update_invoice "github.com/devdammit/shekel/cmd/unit/internal/use-cases/update-invoice"
+	"github.com/devdammit/shekel/pkg/log"
 	"github.com/devdammit/shekel/pkg/planner"
 	"github.com/devdammit/shekel/pkg/pointer"
 	"github.com/devdammit/shekel/pkg/types/datetime"
@@ -24,13 +26,15 @@ func TestUpdateInvoiceUseCase_Execute(t *testing.T) {
 			periods        = mocks.NewMockPeriodsRepository(mockController)
 			transactor     = mocks.NewMockTransactor(mockController)
 			service        = mocks.NewMockInvoicesService(mockController)
+			calendar       = mocks.NewMockCalendarService(mockController)
+			logger         = mocks.NewMockLogger(mockController)
 		)
 
 		periods.EXPECT().GetLast(gomock.Any()).Times(1).Return(&entities.Period{
 			ClosedAt: pointer.Ptr(datetime.MustParseDateTime("2024-01-01 00:01")),
 		}, nil)
 
-		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service)
+		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service, calendar, logger)
 
 		err := useCase.Execute(context.Background(), &port.UpdateInvoiceRequest{})
 
@@ -46,13 +50,15 @@ func TestUpdateInvoiceUseCase_Execute(t *testing.T) {
 			periods        = mocks.NewMockPeriodsRepository(mockController)
 			transactor     = mocks.NewMockTransactor(mockController)
 			service        = mocks.NewMockInvoicesService(mockController)
+			calendar       = mocks.NewMockCalendarService(mockController)
+			logger         = mocks.NewMockLogger(mockController)
 		)
 
 		periods.EXPECT().GetLast(gomock.Any()).Times(1).Return(&entities.Period{
 			CreatedAt: datetime.MustParseDateTime("2024-01-01 00:01"),
 		}, nil)
 
-		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service)
+		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service, calendar, logger)
 
 		err := useCase.Execute(context.Background(), &port.UpdateInvoiceRequest{
 			Date: datetime.MustParseDateTime("2023-01-01 00:01"),
@@ -70,6 +76,8 @@ func TestUpdateInvoiceUseCase_Execute(t *testing.T) {
 			periods        = mocks.NewMockPeriodsRepository(mockController)
 			transactor     = mocks.NewMockTransactor(mockController)
 			service        = mocks.NewMockInvoicesService(mockController)
+			calendar       = mocks.NewMockCalendarService(mockController)
+			logger         = mocks.NewMockLogger(mockController)
 		)
 
 		periods.EXPECT().GetLast(gomock.Any()).Times(1).Return(&entities.Period{
@@ -79,7 +87,7 @@ func TestUpdateInvoiceUseCase_Execute(t *testing.T) {
 			Date: datetime.MustParseDateTime("2023-01-01 00:01"),
 		}, nil)
 
-		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service)
+		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service, calendar, logger)
 
 		err := useCase.Execute(context.Background(), &port.UpdateInvoiceRequest{
 			Date: datetime.MustParseDateTime("2024-01-01 00:01"),
@@ -97,6 +105,8 @@ func TestUpdateInvoiceUseCase_Execute(t *testing.T) {
 			periods        = mocks.NewMockPeriodsRepository(mockController)
 			transactor     = mocks.NewMockTransactor(mockController)
 			service        = mocks.NewMockInvoicesService(mockController)
+			calendar       = mocks.NewMockCalendarService(mockController)
+			logger         = mocks.NewMockLogger(mockController)
 		)
 
 		periods.EXPECT().GetLast(gomock.Any()).Times(1).Return(&entities.Period{
@@ -107,7 +117,7 @@ func TestUpdateInvoiceUseCase_Execute(t *testing.T) {
 			Status: entities.InvoiceStatusPaid,
 		}, nil)
 
-		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service)
+		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service, calendar, logger)
 
 		err := useCase.Execute(context.Background(), &port.UpdateInvoiceRequest{
 			Date: datetime.MustParseDateTime("2024-01-01 00:01"),
@@ -125,6 +135,8 @@ func TestUpdateInvoiceUseCase_Execute(t *testing.T) {
 			periods        = mocks.NewMockPeriodsRepository(mockController)
 			transactor     = mocks.NewMockTransactor(mockController)
 			service        = mocks.NewMockInvoicesService(mockController)
+			calendar       = mocks.NewMockCalendarService(mockController)
+			logger         = mocks.NewMockLogger(mockController)
 		)
 
 		periods.EXPECT().GetLast(gomock.Any()).Times(1).Return(&entities.Period{
@@ -151,7 +163,9 @@ func TestUpdateInvoiceUseCase_Execute(t *testing.T) {
 			ID: 1,
 		}, nil)
 
-		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service)
+		calendar.EXPECT().Sync(gomock.Any()).Times(1).Return(nil)
+
+		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service, calendar, logger)
 
 		err := useCase.Execute(context.Background(), &port.UpdateInvoiceRequest{
 			InvoiceID: 1,
@@ -171,6 +185,8 @@ func TestUpdateInvoiceUseCase_Execute(t *testing.T) {
 			periods        = mocks.NewMockPeriodsRepository(mockController)
 			transactor     = mocks.NewMockTransactor(mockController)
 			service        = mocks.NewMockInvoicesService(mockController)
+			calendar       = mocks.NewMockCalendarService(mockController)
+			logger         = mocks.NewMockLogger(mockController)
 		)
 
 		periods.EXPECT().GetLast(gomock.Any()).Times(1).Return(&entities.Period{
@@ -285,7 +301,9 @@ func TestUpdateInvoiceUseCase_Execute(t *testing.T) {
 			}
 		})
 
-		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service)
+		calendar.EXPECT().Sync(gomock.Any()).Times(1).Return(nil)
+
+		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service, calendar, logger)
 
 		err := useCase.Execute(context.Background(), &port.UpdateInvoiceRequest{
 			InvoiceID: 1,
@@ -296,6 +314,61 @@ func TestUpdateInvoiceUseCase_Execute(t *testing.T) {
 				EndCount:      pointer.Ptr(uint32(3)),
 			},
 			Date: datetime.MustParseDateTime("2024-01-03 15:00"),
+		})
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("should log warn when calendar sync fails and updating one invoice", func(t *testing.T) {
+		var (
+			mockController = gomock.NewController(t)
+			invoices       = mocks.NewMockInvoicesRepository(mockController)
+			templates      = mocks.NewMockInvoicesTemplateRepository(mockController)
+			contacts       = mocks.NewMockContactsRepository(mockController)
+			periods        = mocks.NewMockPeriodsRepository(mockController)
+			transactor     = mocks.NewMockTransactor(mockController)
+			service        = mocks.NewMockInvoicesService(mockController)
+			calendar       = mocks.NewMockCalendarService(mockController)
+			logger         = mocks.NewMockLogger(mockController)
+		)
+
+		periods.EXPECT().GetLast(gomock.Any()).Times(1).Return(&entities.Period{
+			CreatedAt: datetime.MustParseDateTime("2024-01-01 00:00"),
+		}, nil)
+
+		invoices.EXPECT().GetByID(gomock.Any(), gomock.Any()).Times(1).Return(&entities.Invoice{
+			ID:     1,
+			Date:   datetime.MustParseDateTime("2024-01-02 00:02"),
+			Status: entities.InvoiceStatusPending,
+			Template: &entities.InvoiceTemplate{
+				ID: 1,
+			},
+		}, nil)
+
+		invoices.EXPECT().Update(gomock.Any(), gomock.Any()).Times(1).Return(&entities.Invoice{}, nil).Do(func(ctx context.Context, invoice *entities.Invoice) {
+			assert.Equal(t, uint64(1), invoice.ID)
+			assert.Equal(t, datetime.MustParseDateTime("2024-01-01 00:01"), invoice.Date)
+			assert.Equal(t, entities.InvoiceStatusPending, invoice.Status)
+			assert.Nil(t, invoice.Template)
+		})
+
+		contacts.EXPECT().GetByID(gomock.Any(), gomock.Any()).Times(1).Return(&entities.Contact{
+			ID: 1,
+		}, nil)
+
+		calendar.EXPECT().Sync(gomock.Any()).Times(1).Return(errors.New("sync error"))
+
+		logger.EXPECT().Warn(gomock.Any(), gomock.Any()).Times(1).Do(func(ctx context.Context, fields ...log.Field) {
+			assert.Equal(t, "error", fields[0].Key)
+			assert.Equal(t, "message", fields[1].Key)
+		})
+
+		useCase := update_invoice.NewUpdateInvoiceUseCase(periods, invoices, templates, contacts, transactor, service, calendar, logger)
+
+		err := useCase.Execute(context.Background(), &port.UpdateInvoiceRequest{
+			InvoiceID: 1,
+			ContactID: 1,
+			Date:      datetime.MustParseDateTime("2024-01-01 00:01"),
 		})
 
 		assert.NoError(t, err)

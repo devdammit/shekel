@@ -145,3 +145,40 @@ func (mr *MockPeriodsRepositoryMockRecorder) GetLast(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLast", reflect.TypeOf((*MockPeriodsRepository)(nil).GetLast), ctx)
 }
+
+// MockCalendarService is a mock of CalendarService interface.
+type MockCalendarService struct {
+	ctrl     *gomock.Controller
+	recorder *MockCalendarServiceMockRecorder
+}
+
+// MockCalendarServiceMockRecorder is the mock recorder for MockCalendarService.
+type MockCalendarServiceMockRecorder struct {
+	mock *MockCalendarService
+}
+
+// NewMockCalendarService creates a new mock instance.
+func NewMockCalendarService(ctrl *gomock.Controller) *MockCalendarService {
+	mock := &MockCalendarService{ctrl: ctrl}
+	mock.recorder = &MockCalendarServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCalendarService) EXPECT() *MockCalendarServiceMockRecorder {
+	return m.recorder
+}
+
+// Sync mocks base method.
+func (m *MockCalendarService) Sync(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Sync", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Sync indicates an expected call of Sync.
+func (mr *MockCalendarServiceMockRecorder) Sync(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sync", reflect.TypeOf((*MockCalendarService)(nil).Sync), ctx)
+}

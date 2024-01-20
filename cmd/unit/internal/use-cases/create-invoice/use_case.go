@@ -20,17 +20,23 @@ type PeriodsRepository interface {
 	GetLast(ctx context.Context) (*entities.Period, error)
 }
 
+type CalendarService interface {
+	Sync(ctx context.Context) error
+}
+
 type UseCase struct {
 	invoices InvoicesRepository
 	service  InvoicesService
 	periods  PeriodsRepository
+	calendar CalendarService
 }
 
-func NewUseCase(invoices InvoicesRepository, service InvoicesService, periods PeriodsRepository) *UseCase {
+func NewUseCase(invoices InvoicesRepository, service InvoicesService, periods PeriodsRepository, calendar CalendarService) *UseCase {
 	return &UseCase{
 		invoices: invoices,
 		service:  service,
 		periods:  periods,
+		calendar: calendar,
 	}
 }
 
@@ -93,6 +99,11 @@ func (u *UseCase) Execute(ctx context.Context, request port.CreateInvoiceRequest
 	}
 
 	_, err = u.invoices.BulkCreate(ctx, invoices)
+	if err != nil {
+		return err
+	}
+
+	err = u.calendar.Sync(ctx)
 	if err != nil {
 		return err
 	}

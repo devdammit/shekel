@@ -22,6 +22,7 @@ func TestUseCase_Execute(t *testing.T) {
 			invoices       = mocks.NewMockInvoicesRepository(mockController)
 			service        = mocks.NewMockInvoicesService(mockController)
 			periods        = mocks.NewMockPeriodsRepository(mockController)
+			calendar       = mocks.NewMockCalendarService(mockController)
 		)
 
 		periods.EXPECT().GetLast(gomock.Any()).Times(1).Return(&entities.Period{
@@ -37,7 +38,9 @@ func TestUseCase_Execute(t *testing.T) {
 			},
 		}, nil)
 
-		useCase := create_invoice.NewUseCase(invoices, service, periods)
+		calendar.EXPECT().Sync(gomock.Any()).Times(1).Return(nil)
+
+		useCase := create_invoice.NewUseCase(invoices, service, periods, calendar)
 
 		err := useCase.Execute(context.Background(), port.CreateInvoiceRequest{
 			Name:        "Invoice 1",
@@ -60,6 +63,7 @@ func TestUseCase_Execute(t *testing.T) {
 			invoices       = mocks.NewMockInvoicesRepository(mockController)
 			service        = mocks.NewMockInvoicesService(mockController)
 			periods        = mocks.NewMockPeriodsRepository(mockController)
+			calendar       = mocks.NewMockCalendarService(mockController)
 		)
 
 		periods.EXPECT().GetLast(gomock.Any()).Times(1).Return(&entities.Period{
@@ -88,8 +92,9 @@ func TestUseCase_Execute(t *testing.T) {
 				},
 			},
 		}, nil)
+		calendar.EXPECT().Sync(gomock.Any()).Times(1).Return(nil)
 
-		useCase := create_invoice.NewUseCase(invoices, service, periods)
+		useCase := create_invoice.NewUseCase(invoices, service, periods, calendar)
 
 		err := useCase.Execute(context.Background(), port.CreateInvoiceRequest{
 			Name:        "Invoice 1",
@@ -117,6 +122,7 @@ func TestUseCase_Execute(t *testing.T) {
 			invoices       = mocks.NewMockInvoicesRepository(mockController)
 			service        = mocks.NewMockInvoicesService(mockController)
 			periods        = mocks.NewMockPeriodsRepository(mockController)
+			calendar       = mocks.NewMockCalendarService(mockController)
 		)
 
 		periods.EXPECT().GetLast(gomock.Any()).Times(1).Return(&entities.Period{
@@ -127,7 +133,7 @@ func TestUseCase_Execute(t *testing.T) {
 		invoices.EXPECT().BulkCreate(gomock.Any(), gomock.Any()).Times(0)
 		service.EXPECT().GetScheduledInvoices(gomock.Any(), gomock.Any()).Times(1).Return(nil, nil)
 
-		useCase := create_invoice.NewUseCase(invoices, service, periods)
+		useCase := create_invoice.NewUseCase(invoices, service, periods, calendar)
 
 		err := useCase.Execute(context.Background(), port.CreateInvoiceRequest{
 			Name:        "Invoice 1",
@@ -150,6 +156,7 @@ func TestUseCase_Execute(t *testing.T) {
 			invoices       = mocks.NewMockInvoicesRepository(mockController)
 			service        = mocks.NewMockInvoicesService(mockController)
 			periods        = mocks.NewMockPeriodsRepository(mockController)
+			calendar       = mocks.NewMockCalendarService(mockController)
 		)
 
 		periods.EXPECT().GetLast(gomock.Any()).Times(1).Return(&entities.Period{
@@ -160,7 +167,7 @@ func TestUseCase_Execute(t *testing.T) {
 		invoices.EXPECT().BulkCreate(gomock.Any(), gomock.Any()).Times(0)
 		service.EXPECT().GetScheduledInvoices(gomock.Any(), gomock.Any()).Times(0)
 
-		useCase := create_invoice.NewUseCase(invoices, service, periods)
+		useCase := create_invoice.NewUseCase(invoices, service, periods, calendar)
 
 		err := useCase.Execute(context.Background(), port.CreateInvoiceRequest{
 			Name:        "Invoice 1",
@@ -183,6 +190,7 @@ func TestUseCase_Execute(t *testing.T) {
 			invoices       = mocks.NewMockInvoicesRepository(mockController)
 			service        = mocks.NewMockInvoicesService(mockController)
 			periods        = mocks.NewMockPeriodsRepository(mockController)
+			calendar       = mocks.NewMockCalendarService(mockController)
 		)
 
 		periods.EXPECT().GetLast(gomock.Any()).Times(1).Return(&entities.Period{
@@ -194,7 +202,7 @@ func TestUseCase_Execute(t *testing.T) {
 		invoices.EXPECT().BulkCreate(gomock.Any(), gomock.Any()).Times(0)
 		service.EXPECT().GetScheduledInvoices(gomock.Any(), gomock.Any()).Times(0)
 
-		useCase := create_invoice.NewUseCase(invoices, service, periods)
+		useCase := create_invoice.NewUseCase(invoices, service, periods, calendar)
 
 		err := useCase.Execute(context.Background(), port.CreateInvoiceRequest{
 			Name:        "Invoice 1",

@@ -4,38 +4,69 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
 	"github.com/devdammit/shekel/internal/resources"
+	"github.com/devdammit/shekel/pkg/log"
 	"go.etcd.io/bbolt"
 )
 
 var AccountsBucket = []byte("accounts")
 
+type data struct {
+	val map[uint64]entities.Account
+	mu  sync.RWMutex
+}
+
 type AccountsRepository struct {
-	db *resources.Bolt
+	db   *resources.Bolt
+	data data
 }
 
 func NewAccountsRepository(bolt *resources.Bolt) *AccountsRepository {
 	return &AccountsRepository{
 		db: bolt,
+		data: data{
+			val: make(map[uint64]entities.Account),
+			mu:  sync.RWMutex{},
+		},
 	}
 }
 
-func (r *AccountsRepository) Create(account *entities.Account) (*entities.Account, error) {
+func (r *AccountsRepository) Start() error {
 	err := r.db.Update(func(tx *bbolt.Tx) error {
+		root := tx.Bucket(resources.BoltRootBucket)
+
+		_, err := root.CreateBucketIfNotExists(AccountsBucket)
+
+		if err != nil {
+			return fmt.Errorf("failed to create accounts bucket: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return r.db.View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(resources.BoltRootBucket).Bucket(AccountsBucket)
 
-		err := bucket.ForEach(func(k, v []byte) error {
-			var a entities.Account
+		err := bucket.ForEach(func(_, v []byte) error {
+			var account entities.Account
 
-			if err := json.Unmarshal(v, &a); err != nil {
-				return fmt.Errorf("failed to unmarshal: %w", err)
+			err := json.Unmarshal(v, &account)
+
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal account: %w", err)
 			}
 
-			if a.Name == account.Name {
-				return entities.ErrorAccountExists
-			}
+			r.data.mu.Lock()
+			defer r.data.mu.Unlock()
+
+			r.data.val[account.ID] = account
 
 			return nil
 		})
@@ -44,6 +75,25 @@ func (r *AccountsRepository) Create(account *entities.Account) (*entities.Accoun
 			return err
 		}
 
+		log.Info("accounts loaded", log.Int("count", len(r.data.val)))
+
+		return nil
+	})
+}
+
+func (r *AccountsRepository) Create(account *entities.Account) (*entities.Account, error) {
+	err := r.db.Update(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket(resources.BoltRootBucket).Bucket(AccountsBucket)
+
+		r.data.mu.RLock()
+		defer r.data.mu.RUnlock()
+
+		for _, a := range r.data.val {
+			if a.Name == account.Name {
+				return entities.ErrorAccountExists
+			}
+		}
+		
 		newID, _ := bucket.NextSequence()
 		account.ID = newID
 

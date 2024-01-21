@@ -16,6 +16,7 @@ const (
 
 var (
 	ErrorAccountExists = errors.New("account already exists")
+	ErrorAccountNotFound = errors.New("account not found")
 )
 
 type Account struct {

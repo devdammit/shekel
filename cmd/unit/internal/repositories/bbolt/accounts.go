@@ -118,3 +118,16 @@ func (r *AccountsRepository) Create(account *entities.Account) (*entities.Accoun
 
 	return account, nil
 }
+
+func (r *AccountsRepository) GetByID(id uint64) (*entities.Account, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	account, ok := r.data[id]
+
+	if !ok {
+		return nil, entities.ErrorAccountNotFound
+	}
+
+	return &account, nil
+}

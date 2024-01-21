@@ -17,7 +17,7 @@ var AccountsBucket = []byte("accounts")
 type AccountsRepository struct {
 	db   *resources.Bolt
 	data map[uint64]entities.Account
-	mu   sync.RWMutex
+	*sync.RWMutex
 }
 
 func NewAccountsRepository(bolt *resources.Bolt) *AccountsRepository {
@@ -56,8 +56,8 @@ func (r *AccountsRepository) Start() error {
 				return fmt.Errorf("failed to unmarshal account: %w", err)
 			}
 
-			r.mu.Lock()
-			defer r.mu.Unlock()
+			r.Lock()
+			defer r.Unlock()
 
 			r.data[account.ID] = account
 
@@ -78,8 +78,8 @@ func (r *AccountsRepository) Create(account *entities.Account) (*entities.Accoun
 	err := r.db.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(resources.BoltRootBucket).Bucket(AccountsBucket)
 
-		r.mu.Lock()
-		defer r.mu.Unlock()
+		r.Lock()
+		defer r.Unlock()
 
 		for _, a := range r.data {
 			if a.Name == account.Name {
@@ -115,8 +115,8 @@ func (r *AccountsRepository) Create(account *entities.Account) (*entities.Accoun
 }
 
 func (r *AccountsRepository) GetByID(id uint64) (*entities.Account, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+	r.RLock()
+	defer r.RUnlock()
 
 	account, ok := r.data[id]
 
@@ -128,8 +128,8 @@ func (r *AccountsRepository) GetByID(id uint64) (*entities.Account, error) {
 }
 
 func (r *AccountsRepository) Update(account *entities.Account) (*entities.Account, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.Lock()
+	defer r.Unlock()
 
 	err := r.db.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(resources.BoltRootBucket).Bucket(AccountsBucket)
@@ -159,8 +159,8 @@ func (r *AccountsRepository) Update(account *entities.Account) (*entities.Accoun
 }
 
 func (r *AccountsRepository) Delete(id uint64) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.Lock()
+	defer r.Unlock()
 
 	account, ok := r.data[id]
 

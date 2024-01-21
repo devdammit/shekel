@@ -1,7 +1,6 @@
 package bbolt
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -13,11 +12,6 @@ import (
 )
 
 var AccountsBucket = []byte("accounts")
-
-type data struct {
-	val map[uint64]entities.Account
-	mu  sync.RWMutex
-}
 
 type AccountsRepository struct {
 	db   *resources.Bolt
@@ -130,4 +124,35 @@ func (r *AccountsRepository) GetByID(id uint64) (*entities.Account, error) {
 	}
 
 	return &account, nil
+}
+
+func (r *AccountsRepository) Update(account *entities.Account) (*entities.Account, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	err := r.db.Update(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket(resources.BoltRootBucket).Bucket(AccountsBucket)
+
+		data, err := json.Marshal(account)
+
+		if err != nil {
+			return fmt.Errorf("failed to marshal: %w", err)
+		}
+
+		err = bucket.Put(resources.Itob(int(account.ID)), data)
+
+		if err != nil {
+			return fmt.Errorf("failed to put in bucket: %w", err)
+		}
+
+		r.data[account.ID] = *account
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
 }

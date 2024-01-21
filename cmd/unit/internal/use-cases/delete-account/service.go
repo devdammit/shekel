@@ -19,21 +19,7 @@ type DeleteAccountUseCase struct {
 // Прежде чем удалять счет, нужно убедиться, что он не используется в транзакциях.
 // Если используется, то архивируем счет, а не удаляем.
 func (u *DeleteAccountUseCase) Execute(accountID uint64) (bool, error) {
-	count, err := u.transactionsRepo.GetCountByAccount(accountID)
-	if err != nil {
-		return false, err
-	}
-
-	if count > 0 {
-		err = u.repo.Archive(accountID)
-		if err != nil {
-			return false, err
-		}
-
-		return true, nil
-	}
-
-	err = u.repo.Delete(accountID)
+	err := u.repo.Delete(accountID)
 	if err != nil {
 		return false, err
 	}

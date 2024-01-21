@@ -25,8 +25,7 @@ type Account struct {
 	Type        AccountType     `json:"type"`
 	Balance     currency.Amount `json:"amount"`
 
-	IsArchived bool `json:"deleted"`
-
-	CreatedAt datetime.Time `json:"created_at"`
-	UpdateAt  datetime.Time `json:"updated_at"`
+	DeletedAt *datetime.DateTime `json:"delete_at"`
+	CreatedAt datetime.DateTime  `json:"created_at"`
+	UpdateAt  datetime.DateTime  `json:"updated_at"`
 }

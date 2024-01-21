@@ -1,0 +1,41 @@
+schema:
+  - internal/handlers/graphql/*.graphqls
+
+exec:
+  filename: internal/handlers/graphql/generated.go
+  package: graphql
+
+model:
+  filename: internal/handlers/graphql/model/models_gen.go
+  package: model
+
+resolver:
+    layout: follow-schema
+    dir: internal/handlers/graphql
+    package: graphql
+    filename_template: "{name}.resolvers.go"
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+      - github.com/99designs/gqlgen/graphql.Uint64
+
+  Uint64:
+    model: github.com/99designs/gqlgen/graphql.Uint64
+
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+
+  DateTime:
+    model: github.com/devdammit/shekel/pkg/gql.DateTime
+
+  Date:
+    model: github.com/devdammit/shekel/pkg/gql.Date
+

@@ -6,10 +6,10 @@ type Contact struct {
 	ID   uint64 `json:"id"`
 	Name string `json:"name"`
 
-	Text   string `json:"test"`
+	Text   string `json:"text"`
 	QRCode []byte `json:"qr_code"`
 
-	DeleteAt  *datetime.Time `json:"delete_at"`
-	CreatedAt datetime.Time  `json:"created_at"`
-	UpdateAt  datetime.Time  `json:"updated_at"`
+	DeleteAt  *datetime.DateTime `json:"delete_at"`
+	CreatedAt datetime.DateTime  `json:"created_at"`
+	UpdateAt  datetime.DateTime  `json:"updated_at"`
 }

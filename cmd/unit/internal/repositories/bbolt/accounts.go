@@ -8,6 +8,7 @@ import (
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
 	"github.com/devdammit/shekel/internal/resources"
 	"github.com/devdammit/shekel/pkg/log"
+	"github.com/devdammit/shekel/pkg/types/datetime"
 	"go.etcd.io/bbolt"
 )
 
@@ -155,4 +156,73 @@ func (r *AccountsRepository) Update(account *entities.Account) (*entities.Accoun
 	}
 
 	return account, nil
+}
+
+func (r *AccountsRepository) Delete(id uint64) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	account, ok := r.data[id]
+
+	if !ok {
+		return entities.ErrorAccountNotFound
+	}
+
+	err := r.db.Update(func(tx *bbolt.Tx) error {
+		root := tx.Bucket(resources.BoltRootBucket)
+		transactionsCursor := root.Bucket(TransactionsBucket).Cursor()
+
+		canDelete := true
+
+		for k, v := transactionsCursor.First(); k != nil; k, v = transactionsCursor.Next() {
+			var transaction entities.Transaction
+
+			err := json.Unmarshal(v, &transaction)
+
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal transaction: %w", err)
+			}
+
+			if transaction.From.ID == account.ID || transaction.To.ID == account.ID {
+				canDelete = false
+				break
+			}
+		}
+
+		bucket := root.Bucket(AccountsBucket)
+		key := resources.Itob(int(account.ID))
+
+		if !canDelete {
+			deletedAt := datetime.Now()
+			account.DeletedAt = &deletedAt
+
+			data, err := json.Marshal(account)
+
+			if err != nil {
+				return fmt.Errorf("failed to marshal: %w", err)
+			}
+
+			if err := bucket.Put(key, data); err != nil {
+				return fmt.Errorf("failed to put in bucket: %w", err)
+			}
+
+			r.data[account.ID] = account
+
+			return nil
+		}
+
+		if err := bucket.Delete(key); err != nil {
+			return fmt.Errorf("failed to delete from bucket: %w", err)
+		}
+
+		delete(r.data, account.ID)
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

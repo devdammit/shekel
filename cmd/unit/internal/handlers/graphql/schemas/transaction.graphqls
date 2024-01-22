@@ -6,7 +6,5 @@ type Transaction {
     from: Account
     to: Account
 
-
-
     createdAt: DateTime!
 }

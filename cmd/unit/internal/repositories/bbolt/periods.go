@@ -1,6 +1,7 @@
 package bbolt
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
 	port "github.com/devdammit/shekel/cmd/unit/internal/ports/repositories/periods"
@@ -13,10 +14,6 @@ import (
 
 var PeriodsBucket = []byte("periods")
 
-type AppConfigService interface {
-	GetStartYear() (datetime.DateTime, error)
-}
-
 type DateTimeProvider interface {
 	Now() datetime.DateTime
 }
@@ -25,17 +22,15 @@ type PeriodsRepository struct {
 	db      *resources.Bolt
 	periods map[uint64]entities.Period
 
-	appConfig AppConfigService
-	dateTime  DateTimeProvider
+	dateTime DateTimeProvider
 	sync.RWMutex
 }
 
-func NewPeriodsRepository(db *resources.Bolt, appConfig AppConfigService, provider DateTimeProvider) *PeriodsRepository {
+func NewPeriodsRepository(db *resources.Bolt, provider DateTimeProvider) *PeriodsRepository {
 	return &PeriodsRepository{
-		db:        db,
-		periods:   make(map[uint64]entities.Period),
-		appConfig: appConfig,
-		dateTime:  provider,
+		db:       db,
+		periods:  make(map[uint64]entities.Period),
+		dateTime: provider,
 	}
 }
 
@@ -89,9 +84,9 @@ func (r *PeriodsRepository) Start() error {
 	return nil
 }
 
-func (r *PeriodsRepository) Create(period entities.Period) error {
+func (r *PeriodsRepository) Create(_ context.Context, period entities.Period) (*entities.Period, error) {
 	if len(r.periods) != 0 && r.periods[uint64(len(r.periods)-1)].ClosedAt == nil {
-		return port.ErrHasOpenedPeriod
+		return nil, port.ErrHasOpenedPeriod
 	}
 
 	err := r.db.Update(func(tx *bbolt.Tx) error {
@@ -108,7 +103,7 @@ func (r *PeriodsRepository) Create(period entities.Period) error {
 		return bucket.Put(resources.Itob(int(period.ID)), data)
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	r.Lock()
@@ -116,5 +111,12 @@ func (r *PeriodsRepository) Create(period entities.Period) error {
 
 	r.periods[period.ID] = period
 
-	return nil
+	return &period, nil
+}
+
+func (r *PeriodsRepository) GetCount(_ context.Context) (uint64, error) {
+	r.RLock()
+	defer r.RUnlock()
+
+	return uint64(len(r.periods)), nil
 }

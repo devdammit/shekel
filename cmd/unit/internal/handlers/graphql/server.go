@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"fmt"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -11,37 +12,48 @@ import (
 type Server struct {
 	port string
 
-	done chan struct{}
+	srv *http.Server
+
+	resolver *Resolver
 }
 
-func NewServer(port string) *Server {
+func NewServer(port string, resolver *Resolver) *Server {
 	return &Server{
-		port: port,
-		done: make(chan struct{}),
+		port:     port,
+		srv:      &http.Server{},
+		resolver: resolver,
 	}
 }
 
 func (s Server) Start() {
 	log.Info("starting graphql server")
 
-	srv := handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: &Resolver{}}))
+	srv := handler.NewDefaultServer(NewExecutableSchema(Config{Resolvers: s.resolver}))
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	mux := http.NewServeMux()
+	mux.Handle("/", playground.AltairHandler("GraphQL playground", "/query"))
+	mux.Handle("/query", srv)
+
+	serv := &http.Server{
+		Addr:    ":" + s.port,
+		Handler: mux,
+	}
+
+	s.srv = serv
 
 	log.Info(fmt.Sprintf("connect to http://localhost:%s/ for GraphQL playground", s.port))
 
 	go func() {
-		defer close(s.done)
-
-		if err := http.ListenAndServe(":"+s.port, nil); err != nil {
+		if err := serv.ListenAndServe(); err != nil {
 			log.With(log.Err(err)).Fatal("graphql server failure")
 		}
 	}()
 }
 
 func (s Server) Stop() {
-	<-s.done
+	if err := s.srv.Shutdown(context.Background()); err != nil {
+		log.With(log.Err(err)).Fatal("graphql server shutdown failure")
+	}
 
 	log.Info("graphql server stopped")
 }

@@ -18,6 +18,12 @@ func NewDateTime(t time.Time) DateTime {
 	return DateTime{Time: t}
 }
 
+type DateTimeProvider struct{}
+
+func (p DateTimeProvider) Now() DateTime {
+	return NewDateTime(time.Now())
+}
+
 // ParseDateTime creates a DateTime value from a string in "YYYY-MM-DD HH:mm" format.
 // It will return an error if the string is not properly formatted.
 func ParseDateTime(str string) (DateTime, error) {

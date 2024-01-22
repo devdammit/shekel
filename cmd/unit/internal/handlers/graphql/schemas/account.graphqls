@@ -15,3 +15,11 @@ type Account {
     createdAt: DateTime!
     updatedAt: DateTime!
 }
+
+
+input CreateAccountInput {
+    name: String!
+    description: String
+    Type: AccountType!
+    Balance: AmountInput!
+}

@@ -26,6 +26,11 @@ type Amount struct {
 	Currency gql.Currency `json:"currency"`
 }
 
+type AmountInput struct {
+	Amount   float64      `json:"amount"`
+	Currency gql.Currency `json:"currency"`
+}
+
 type Contact struct {
 	ID        uint64        `json:"id"`
 	Name      string        `json:"name"`
@@ -33,6 +38,13 @@ type Contact struct {
 	DeletedAt *gql.DateTime `json:"deletedAt,omitempty"`
 	CreatedAt gql.DateTime  `json:"createdAt"`
 	UpdatedAt gql.DateTime  `json:"updatedAt"`
+}
+
+type CreateAccountInput struct {
+	Name        string       `json:"name"`
+	Description *string      `json:"description,omitempty"`
+	Type        AccountType  `json:"Type"`
+	Balance     *AmountInput `json:"Balance"`
 }
 
 type Invoice struct {
@@ -62,6 +74,9 @@ type InvoiceTemplate struct {
 	DeletedAt     *gql.DateTime  `json:"deletedAt,omitempty"`
 	CreatedAt     gql.DateTime   `json:"createdAt"`
 	UpdatedAt     gql.DateTime   `json:"updatedAt"`
+}
+
+type Mutation struct {
 }
 
 type Query struct {

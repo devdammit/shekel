@@ -1,4 +1,4 @@
-package periods
+package initialize
 
 import (
 	"context"
@@ -8,35 +8,35 @@ import (
 	"github.com/devdammit/shekel/pkg/types/datetime"
 )
 
-type Repository interface {
+type PeriodsRepository interface {
 	Create(ctx context.Context, period entities.Period) (*entities.Period, error)
 	GetCount(ctx context.Context) (uint64, error)
 }
 
 type AppConfig interface {
-	GetStartYear() (datetime.DateTime, error)
+	SetStartDate(ctx context.Context, date datetime.Date) error
 }
 
 type DateTimeProvider interface {
 	Now() datetime.DateTime
 }
 
-type Service struct {
-	periods   Repository
+type UseCase struct {
+	periods   PeriodsRepository
 	appConfig AppConfig
 	dateTime  DateTimeProvider
 }
 
-func NewService(periods Repository, appConfig AppConfig, provider DateTimeProvider) *Service {
-	return &Service{
+func NewUseCase(periods PeriodsRepository, appConfig AppConfig, provider DateTimeProvider) *UseCase {
+	return &UseCase{
 		periods:   periods,
 		appConfig: appConfig,
 		dateTime:  provider,
 	}
 }
 
-func (s *Service) InitPeriods(ctx context.Context) error {
-	count, err := s.periods.GetCount(ctx)
+func (uc *UseCase) Execute(ctx context.Context, startDate datetime.Date) error {
+	count, err := uc.periods.GetCount(ctx)
 	if err != nil {
 		return err
 	}
@@ -45,23 +45,23 @@ func (s *Service) InitPeriods(ctx context.Context) error {
 		return errors.New("periods already initialized")
 	}
 
-	startYearMonthFrom, err := s.appConfig.GetStartYear()
+	err = uc.appConfig.SetStartDate(ctx, startDate)
 	if err != nil {
 		return err
 	}
 
-	for date := startYearMonthFrom; date.Before(s.dateTime.Now().Time); date = datetime.NewDateTime(date.AddDate(0, 1, 0)) {
+	for date := startDate; date.Before(uc.dateTime.Now().Time); date = datetime.NewDate(date.AddDate(0, 1, 0)) {
 		period := entities.Period{
-			CreatedAt: date,
+			CreatedAt: datetime.NewDateTime(date.Time),
 		}
 
-		if date.AddDate(0, 1, 0).After(s.dateTime.Now().Time) {
+		if date.AddDate(0, 1, 0).After(uc.dateTime.Now().Time) {
 			period.ClosedAt = nil
 		} else {
 			period.ClosedAt = pointer.Ptr(datetime.NewDateTime(date.AddDate(0, 1, 0)))
 		}
 
-		_, err := s.periods.Create(ctx, period)
+		_, err := uc.periods.Create(ctx, period)
 		if err != nil {
 			return err
 		}

@@ -14,6 +14,12 @@ type CreateAccountUseCase struct {
 	repo Repository
 }
 
+func NewUseCase(repo Repository) *CreateAccountUseCase {
+	return &CreateAccountUseCase{
+		repo: repo,
+	}
+}
+
 func (u *CreateAccountUseCase) Execute(params port.CreateAccountParams) (bool, error) {
 	account := &entities.Account{
 		Name:        params.Name,

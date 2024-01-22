@@ -82,7 +82,7 @@ func (r *AccountsRepository) Create(account *entities.Account) (*entities.Accoun
 		defer r.Unlock()
 
 		for _, a := range r.data {
-			if a.Name == account.Name {
+			if a.Name == account.Name && a.DeletedAt == nil {
 				return entities.ErrorAccountExists
 			}
 		}
@@ -169,30 +169,17 @@ func (r *AccountsRepository) Delete(id uint64) error {
 	}
 
 	err := r.db.Update(func(tx *bbolt.Tx) error {
-		root := tx.Bucket(resources.BoltRootBucket)
-		transactionsCursor := root.Bucket(TransactionsBucket).Cursor()
+		bucket := tx.Bucket(resources.BoltRootBucket).Bucket(AccountsBucket)
 
-		canDelete := true
+		hasTransactions, err := r.hasTransactionsByAccountID(tx, id)
 
-		for k, v := transactionsCursor.First(); k != nil; k, v = transactionsCursor.Next() {
-			var transaction entities.Transaction
-
-			err := json.Unmarshal(v, &transaction)
-
-			if err != nil {
-				return fmt.Errorf("failed to unmarshal transaction: %w", err)
-			}
-
-			if transaction.From.ID == account.ID || transaction.To.ID == account.ID {
-				canDelete = false
-				break
-			}
+		if err != nil {
+			return fmt.Errorf("failed to check has transactions: %w", err)
 		}
 
-		bucket := root.Bucket(AccountsBucket)
 		key := resources.Itob(int(account.ID))
 
-		if !canDelete {
+		if hasTransactions {
 			deletedAt := datetime.Now()
 			account.DeletedAt = &deletedAt
 
@@ -225,4 +212,25 @@ func (r *AccountsRepository) Delete(id uint64) error {
 	}
 
 	return nil
+}
+
+func (r *AccountsRepository) hasTransactionsByAccountID(tx *bbolt.Tx, id uint64) (bool, error) {
+	bucket := tx.Bucket(resources.BoltRootBucket).Bucket(TransactionsBucket)
+	cursor := bucket.Cursor()
+
+	for k, v := cursor.First(); k != nil; k, v = cursor.Next() {
+		var transaction entities.Transaction
+
+		err := json.Unmarshal(v, &transaction)
+
+		if err != nil {
+			return false, fmt.Errorf("failed to unmarshal transaction: %w", err)
+		}
+
+		if transaction.From.ID == id || transaction.To.ID == id {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

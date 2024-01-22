@@ -127,6 +127,19 @@ func (r *AccountsRepository) GetByID(id uint64) (*entities.Account, error) {
 	return &account, nil
 }
 
+func (r *AccountsRepository) GetAll() ([]entities.Account, error) {
+	r.RLock()
+	defer r.RUnlock()
+
+	accounts := make([]entities.Account, 0, len(r.data))
+
+	for _, account := range r.data {
+		accounts = append(accounts, account)
+	}
+
+	return accounts, nil
+}
+
 func (r *AccountsRepository) Update(account *entities.Account) (*entities.Account, error) {
 	r.Lock()
 	defer r.Unlock()

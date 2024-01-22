@@ -1,6 +1,8 @@
 package configs
 
+import "github.com/devdammit/shekel/pkg/types/datetime"
+
 type AppConfig struct {
-	CheckpointPeriodAt uint8 `env:"CHECKPOINT_PERIOD_AT" envDefault:"15"`
-	FinancialYearStart uint8 `env:"FINANCIAL_YEAR_START" envDefault:"1"`
+	CheckpointPeriodAt datetime.Date
+	FinancialYearStart datetime.Date
 }

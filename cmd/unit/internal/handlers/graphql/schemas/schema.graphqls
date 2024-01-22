@@ -2,7 +2,11 @@
 #
 # https://gqlgen.com/getting-started/
 
-
+scalar DateTime
+scalar Date
+scalar Uint64
+scalar Currency
+scalar Uint32
 
 type Query {
     contacts: [Contact!]!

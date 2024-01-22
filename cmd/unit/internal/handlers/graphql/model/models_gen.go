@@ -2,14 +2,253 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+
+	"github.com/devdammit/shekel/pkg/gql"
+)
+
+type Account struct {
+	ID          uint64        `json:"id"`
+	Name        string        `json:"name"`
+	Description *string       `json:"description,omitempty"`
+	Type        AccountType   `json:"Type"`
+	Balance     *Amount       `json:"Balance"`
+	DeletedAt   *gql.DateTime `json:"deletedAt,omitempty"`
+	CreatedAt   gql.DateTime  `json:"createdAt"`
+	UpdatedAt   gql.DateTime  `json:"updatedAt"`
+}
+
+type Amount struct {
+	Amount   float64      `json:"amount"`
+	Currency gql.Currency `json:"currency"`
+}
+
 type Contact struct {
-	ID        uint64  `json:"id"`
-	Name      string  `json:"name"`
-	Text      string  `json:"text"`
-	DeletedAt *string `json:"deletedAt,omitempty"`
-	CreatedAt string  `json:"createdAt"`
-	UpdatedAt string  `json:"updatedAt"`
+	ID        uint64        `json:"id"`
+	Name      string        `json:"name"`
+	Text      string        `json:"text"`
+	DeletedAt *gql.DateTime `json:"deletedAt,omitempty"`
+	CreatedAt gql.DateTime  `json:"createdAt"`
+	UpdatedAt gql.DateTime  `json:"updatedAt"`
+}
+
+type Invoice struct {
+	ID           uint64           `json:"id"`
+	Name         string           `json:"name"`
+	Description  *string          `json:"description,omitempty"`
+	Status       InvoiceStatus    `json:"status"`
+	Type         InvoiceType      `json:"type"`
+	Template     *InvoiceTemplate `json:"template,omitempty"`
+	Contact      *Contact         `json:"contact,omitempty"`
+	Transactions []*Transaction   `json:"transactions,omitempty"`
+	Amount       *Amount          `json:"amount"`
+	Date         *gql.DateTime    `json:"date,omitempty"`
+	CreatedAt    gql.DateTime     `json:"createdAt"`
+	UpdatedAt    gql.DateTime     `json:"updatedAt"`
+}
+
+type InvoiceTemplate struct {
+	ID            uint64         `json:"id"`
+	Name          string         `json:"name"`
+	Description   *string        `json:"description,omitempty"`
+	Type          InvoiceType    `json:"type"`
+	Amount        *Amount        `json:"amount"`
+	RepeatPlanner *RepeatPlanner `json:"repeatPlanner,omitempty"`
+	Contact       *Contact       `json:"contact,omitempty"`
+	Date          gql.DateTime   `json:"date"`
+	DeletedAt     *gql.DateTime  `json:"deletedAt,omitempty"`
+	CreatedAt     gql.DateTime   `json:"createdAt"`
+	UpdatedAt     gql.DateTime   `json:"updatedAt"`
 }
 
 type Query struct {
+}
+
+type RepeatPlanner struct {
+	IntervalCount uint32     `json:"intervalCount"`
+	Interval      RepeatType `json:"interval"`
+	DaysOfWeek    []*uint32  `json:"daysOfWeek,omitempty"`
+	EndDate       *gql.Date  `json:"endDate,omitempty"`
+	EndCount      *uint32    `json:"endCount,omitempty"`
+}
+
+type Transaction struct {
+	ID        uint64       `json:"id"`
+	Amount    *Amount      `json:"amount"`
+	From      *Account     `json:"from,omitempty"`
+	To        *Account     `json:"to,omitempty"`
+	CreatedAt gql.DateTime `json:"createdAt"`
+}
+
+type AccountType string
+
+const (
+	AccountTypeCash   AccountType = "CASH"
+	AccountTypeCredit AccountType = "CREDIT"
+	AccountTypeDebit  AccountType = "DEBIT"
+)
+
+var AllAccountType = []AccountType{
+	AccountTypeCash,
+	AccountTypeCredit,
+	AccountTypeDebit,
+}
+
+func (e AccountType) IsValid() bool {
+	switch e {
+	case AccountTypeCash, AccountTypeCredit, AccountTypeDebit:
+		return true
+	}
+	return false
+}
+
+func (e AccountType) String() string {
+	return string(e)
+}
+
+func (e *AccountType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AccountType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AccountType", str)
+	}
+	return nil
+}
+
+func (e AccountType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type InvoiceStatus string
+
+const (
+	InvoiceStatusPending InvoiceStatus = "PENDING"
+	InvoiceStatusPaid    InvoiceStatus = "PAID"
+)
+
+var AllInvoiceStatus = []InvoiceStatus{
+	InvoiceStatusPending,
+	InvoiceStatusPaid,
+}
+
+func (e InvoiceStatus) IsValid() bool {
+	switch e {
+	case InvoiceStatusPending, InvoiceStatusPaid:
+		return true
+	}
+	return false
+}
+
+func (e InvoiceStatus) String() string {
+	return string(e)
+}
+
+func (e *InvoiceStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = InvoiceStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid InvoiceStatus", str)
+	}
+	return nil
+}
+
+func (e InvoiceStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type InvoiceType string
+
+const (
+	InvoiceTypeIncome  InvoiceType = "INCOME"
+	InvoiceTypeExpense InvoiceType = "EXPENSE"
+)
+
+var AllInvoiceType = []InvoiceType{
+	InvoiceTypeIncome,
+	InvoiceTypeExpense,
+}
+
+func (e InvoiceType) IsValid() bool {
+	switch e {
+	case InvoiceTypeIncome, InvoiceTypeExpense:
+		return true
+	}
+	return false
+}
+
+func (e InvoiceType) String() string {
+	return string(e)
+}
+
+func (e *InvoiceType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = InvoiceType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid InvoiceType", str)
+	}
+	return nil
+}
+
+func (e InvoiceType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type RepeatType string
+
+const (
+	RepeatTypeDaily   RepeatType = "DAILY"
+	RepeatTypeWeekly  RepeatType = "WEEKLY"
+	RepeatTypeMonthly RepeatType = "MONTHLY"
+	RepeatTypeYearly  RepeatType = "YEARLY"
+)
+
+var AllRepeatType = []RepeatType{
+	RepeatTypeDaily,
+	RepeatTypeWeekly,
+	RepeatTypeMonthly,
+	RepeatTypeYearly,
+}
+
+func (e RepeatType) IsValid() bool {
+	switch e {
+	case RepeatTypeDaily, RepeatTypeWeekly, RepeatTypeMonthly, RepeatTypeYearly:
+		return true
+	}
+	return false
+}
+
+func (e RepeatType) String() string {
+	return string(e)
+}
+
+func (e *RepeatType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RepeatType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RepeatType", str)
+	}
+	return nil
+}
+
+func (e RepeatType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

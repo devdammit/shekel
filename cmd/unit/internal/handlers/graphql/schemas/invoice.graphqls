@@ -1,0 +1,63 @@
+
+enum InvoiceType {
+    INCOME
+    EXPENSE
+}
+
+enum RepeatType {
+    DAILY
+    WEEKLY
+    MONTHLY
+    YEARLY
+}
+
+type RepeatPlanner {
+    intervalCount: Uint32!
+    interval: RepeatType!
+    daysOfWeek: [Uint32]
+    endDate: Date
+    endCount: Uint32
+}
+
+type InvoiceTemplate {
+    id: Uint64!
+    name: String!
+    description: String
+    type: InvoiceType!
+
+    amount: Amount!
+
+    repeatPlanner: RepeatPlanner
+
+    contact: Contact
+
+
+    date: DateTime!
+    deletedAt: DateTime
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+
+enum InvoiceStatus {
+    PENDING
+    PAID
+}
+
+type Invoice {
+    id: Uint64!
+    name: String!
+    description: String
+    status: InvoiceStatus!
+    type: InvoiceType!
+
+    template: InvoiceTemplate
+    contact: Contact
+    transactions: [Transaction]
+
+    amount: Amount!
+
+    date: DateTime
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}

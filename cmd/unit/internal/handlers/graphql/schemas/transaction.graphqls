@@ -1,0 +1,12 @@
+
+type Transaction {
+    id: Uint64!
+    amount: Amount!
+
+    from: Account
+    to: Account
+
+
+
+    createdAt: DateTime!
+}

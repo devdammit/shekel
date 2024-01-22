@@ -1,0 +1,4 @@
+type Amount {
+    amount: Float!
+    currency: Currency!
+}

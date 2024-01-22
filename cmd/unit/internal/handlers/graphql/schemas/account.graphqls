@@ -1,0 +1,17 @@
+enum AccountType {
+    CASH
+    CREDIT
+    DEBIT
+}
+
+type Account {
+    id: Uint64!
+    name: String!
+    description: String
+    Type: AccountType!
+    Balance: Amount!
+
+    deletedAt: DateTime
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}

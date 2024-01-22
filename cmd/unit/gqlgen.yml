@@ -1,5 +1,5 @@
 schema:
-  - internal/handlers/graphql/*.graphqls
+  - internal/handlers/graphql/schemas/*.graphqls
 
 exec:
   filename: internal/handlers/graphql/generated.go
@@ -26,6 +26,8 @@ models:
 
   Uint64:
     model: github.com/99designs/gqlgen/graphql.Uint64
+  Uint32:
+    model: github.com/99designs/gqlgen/graphql.Uint32
 
   Int:
     model:
@@ -39,3 +41,8 @@ models:
   Date:
     model: github.com/devdammit/shekel/pkg/gql.Date
 
+  Currency:
+    model: github.com/devdammit/shekel/pkg/gql.Currency
+
+  Float64:
+    model: github.com/99designs/gqlgen/graphql.Float64

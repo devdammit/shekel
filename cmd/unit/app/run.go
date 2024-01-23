@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/devdammit/shekel/cmd/unit/internal/handlers/graphql"
 	boltrepo "github.com/devdammit/shekel/cmd/unit/internal/repositories/bbolt"
+	uowbolt "github.com/devdammit/shekel/cmd/unit/internal/uow/bbolt"
 	"github.com/devdammit/shekel/cmd/unit/internal/use-cases/initialize"
 	"github.com/devdammit/shekel/internal/resources"
 	"github.com/devdammit/shekel/pkg/service"
@@ -16,9 +17,8 @@ import (
 const appName = "shekel_unit"
 
 var (
-	fs = flag.NewFlagSet(appName, flag.ExitOnError)
-
-	graphQLPort     = fs.String("graphql-addr", "8080", "GraphQL addr")
+	fs              = flag.NewFlagSet(appName, flag.ExitOnError)
+	addr            = fs.String("graphql-addr", ":8080", "GraphQL addr")
 	dbPath          = fs.String("db-path", "data/unit.db", "Database path")
 	env             = fs.String("env", "dev", "Environment")
 	diagnosticsAddr = fs.String("diagnostics-addr", ":7071", "Kitchen diagnostics addr")
@@ -36,12 +36,14 @@ func Run() *sync.WaitGroup {
 	appConfig := boltrepo.NewAppConfigRepository(bbolt)
 	periodsRepo := boltrepo.NewPeriodsRepository(bbolt, datetime.DateTimeProvider{})
 
+	initializeUow := uowbolt.NewInitializeUow(bbolt, appConfig, periodsRepo)
+
 	return service.RunWait(
 		resources.NewService(bbolt),
 		boltrepo.NewService(appConfig, periodsRepo),
-		graphql.NewServer(*graphQLPort, &graphql.Resolver{
+		graphql.NewServer(*addr, *shutdownTimeout, &graphql.Resolver{
 			UseCases: graphql.UseCases{
-				Initialize: initialize.NewUseCase(periodsRepo, appConfig, datetime.DateTimeProvider{}),
+				Initialize: initialize.NewUseCase(periodsRepo, datetime.DateTimeProvider{}, initializeUow),
 				//CreateAccount: create_account.NewUseCase(), @TODO waiting repository implementation
 			},
 		}),

@@ -65,9 +65,12 @@ func (r *AppConfigRepository) Start() error {
 		}
 
 		if r.config.DateStart != nil {
-			log.Info("app config loaded", log.String("start_date", r.config.DateStart.String()), log.Bool("initialized", r.config.Initialized))
+			log.Info(
+				"app config loaded",
+				log.String("start_date", r.config.DateStart.String()),
+			)
 		} else {
-			log.Info("app config loaded", log.Bool("initialized", r.config.Initialized))
+			log.Info("app config loaded. App is not initialized yet")
 		}
 
 		return nil
@@ -78,25 +81,23 @@ func (r *AppConfigRepository) Get() configs.AppConfig {
 	return r.config
 }
 
-func (c *AppConfigRepository) GetStartDate() (*datetime.Date, error) {
-	if c.config.DateStart == nil {
+func (r *AppConfigRepository) GetStartDate() (*datetime.Date, error) {
+	if r.config.DateStart == nil {
 		return nil, errors.New("start date is not set")
 	}
 
-	return c.config.DateStart, nil
+	return r.config.DateStart, nil
 }
 
-func (c *AppConfigRepository) SetStartDate(ctx context.Context, date datetime.Date) error {
-	c.config.DateStart = &date
+func (r *AppConfigRepository) SetStartDateTx(_ context.Context, tx *bbolt.Tx, date datetime.Date) error {
+	r.config.DateStart = &date
 
-	return c.db.Update(func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket(resources.BoltRootBucket).Bucket(AppConfigBucket)
+	bucket := tx.Bucket(resources.BoltRootBucket).Bucket(AppConfigBucket)
 
-		data, err := json.Marshal(c.config)
-		if err != nil {
-			return err
-		}
+	data, err := json.Marshal(r.config)
+	if err != nil {
+		return err
+	}
 
-		return bucket.Put([]byte("config"), data)
-	})
+	return bucket.Put([]byte("config"), data)
 }

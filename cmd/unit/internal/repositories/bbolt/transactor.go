@@ -23,7 +23,7 @@ func (d *Transactor) Transaction(ctx context.Context, fn func(ctx context.Contex
 	}
 
 	defer func(tx *bbolt.Tx) {
-		err := tx.Rollback()
+		err = tx.Rollback()
 		if err != nil {
 			panic(err)
 		}
@@ -34,7 +34,7 @@ func (d *Transactor) Transaction(ctx context.Context, fn func(ctx context.Contex
 		return err
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 

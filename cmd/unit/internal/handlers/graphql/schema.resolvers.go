@@ -7,11 +7,11 @@ package graphql
 import (
 	"context"
 	"fmt"
+
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
+	"github.com/devdammit/shekel/cmd/unit/internal/handlers/graphql/model"
 	port "github.com/devdammit/shekel/cmd/unit/internal/ports/use-cases"
 	"github.com/devdammit/shekel/pkg/currency"
-
-	"github.com/devdammit/shekel/cmd/unit/internal/handlers/graphql/model"
 	"github.com/devdammit/shekel/pkg/gql"
 	"github.com/devdammit/shekel/pkg/types/datetime"
 )

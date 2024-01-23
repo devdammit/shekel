@@ -5,7 +5,10 @@ go 1.21
 require (
 	github.com/99designs/gqlgen v0.17.43
 	github.com/json-iterator/go v1.1.12
+	github.com/julienschmidt/httprouter v1.3.0
+	github.com/justinas/alice v1.2.0
 	github.com/mailru/easyjson v0.7.7
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/prometheus/client_golang v1.18.0
 	github.com/shamaton/msgpackgen v0.3.0
 	github.com/stretchr/testify v1.8.4

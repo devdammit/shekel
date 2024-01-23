@@ -9,12 +9,13 @@ import (
 )
 
 type PeriodsRepository interface {
-	Create(ctx context.Context, period entities.Period) (*entities.Period, error)
 	GetCount(ctx context.Context) (uint64, error)
 }
 
-type AppConfig interface {
-	SetStartDate(ctx context.Context, date datetime.Date) error
+type UnitOfWork interface {
+	SetStartDate(date datetime.Date)
+	CreatePeriod(period entities.Period) error
+	Commit(ctx context.Context) error
 }
 
 type DateTimeProvider interface {
@@ -22,16 +23,20 @@ type DateTimeProvider interface {
 }
 
 type UseCase struct {
-	periods   PeriodsRepository
-	appConfig AppConfig
-	dateTime  DateTimeProvider
+	periods  PeriodsRepository
+	dateTime DateTimeProvider
+	unit     UnitOfWork
 }
 
-func NewUseCase(periods PeriodsRepository, appConfig AppConfig, provider DateTimeProvider) *UseCase {
+func NewUseCase(
+	periods PeriodsRepository,
+	provider DateTimeProvider,
+	unit UnitOfWork,
+) *UseCase {
 	return &UseCase{
-		periods:   periods,
-		appConfig: appConfig,
-		dateTime:  provider,
+		periods:  periods,
+		dateTime: provider,
+		unit:     unit,
 	}
 }
 
@@ -45,10 +50,7 @@ func (uc *UseCase) Execute(ctx context.Context, startDate datetime.Date) error {
 		return errors.New("periods already initialized")
 	}
 
-	err = uc.appConfig.SetStartDate(ctx, startDate)
-	if err != nil {
-		return err
-	}
+	uc.unit.SetStartDate(startDate)
 
 	for date := startDate; date.Before(uc.dateTime.Now().Time); date = datetime.NewDate(date.AddDate(0, 1, 0)) {
 		period := entities.Period{
@@ -61,10 +63,15 @@ func (uc *UseCase) Execute(ctx context.Context, startDate datetime.Date) error {
 			period.ClosedAt = pointer.Ptr(datetime.NewDateTime(date.AddDate(0, 1, 0)))
 		}
 
-		_, err := uc.periods.Create(ctx, period)
+		err = uc.unit.CreatePeriod(period)
 		if err != nil {
 			return err
 		}
+	}
+
+	err = uc.unit.Commit(ctx)
+	if err != nil {
+		return err
 	}
 
 	return nil

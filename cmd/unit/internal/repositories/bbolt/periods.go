@@ -9,10 +9,9 @@ import (
 	"github.com/devdammit/shekel/pkg/log"
 	"github.com/devdammit/shekel/pkg/types/datetime"
 	"go.etcd.io/bbolt"
-	"sync"
 )
 
-var PeriodsBucket = []byte("periods")
+var PeriodsBucket = []byte("periods") //nolint:gochecknoglobals
 
 type DateTimeProvider interface {
 	Now() datetime.DateTime
@@ -23,7 +22,6 @@ type PeriodsRepository struct {
 	periods map[uint64]entities.Period
 
 	dateTime DateTimeProvider
-	sync.RWMutex
 }
 
 func NewPeriodsRepository(db *resources.Bolt, provider DateTimeProvider) *PeriodsRepository {
@@ -84,30 +82,49 @@ func (r *PeriodsRepository) Start() error {
 	return nil
 }
 
-func (r *PeriodsRepository) Create(_ context.Context, period entities.Period) (*entities.Period, error) {
-	if len(r.periods) != 0 && r.periods[uint64(len(r.periods)-1)].ClosedAt == nil {
-		return nil, port.ErrHasOpenedPeriod
-	}
+func (r *PeriodsRepository) Create(ctx context.Context, period entities.Period) (*entities.Period, error) {
+	var entity entities.Period
 
 	err := r.db.Update(func(tx *bbolt.Tx) error {
-		bucket := tx.Bucket(resources.BoltRootBucket).Bucket(PeriodsBucket)
-		ID, _ := bucket.NextSequence()
-
-		period.ID = ID
-
-		data, err := json.Marshal(period)
+		p, err := r.CreateTx(ctx, tx, period)
 		if err != nil {
 			return err
 		}
 
-		return bucket.Put(resources.Itob(int(period.ID)), data)
+		entity = *p
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	r.Lock()
-	defer r.Unlock()
+	return &entity, nil
+}
+
+func (r *PeriodsRepository) CreateTx(
+	_ context.Context,
+	tx *bbolt.Tx,
+	period entities.Period,
+) (*entities.Period, error) {
+	if len(r.periods) != 0 && r.periods[uint64(len(r.periods)-1)].ClosedAt == nil {
+		return nil, port.ErrHasOpenedPeriod
+	}
+
+	bucket := tx.Bucket(resources.BoltRootBucket).Bucket(PeriodsBucket)
+	id, _ := bucket.NextSequence()
+
+	period.ID = id
+
+	data, err := json.Marshal(period)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bucket.Put(resources.Itob(int(period.ID)), data)
+	if err != nil {
+		return nil, err
+	}
 
 	r.periods[period.ID] = period
 
@@ -115,8 +132,5 @@ func (r *PeriodsRepository) Create(_ context.Context, period entities.Period) (*
 }
 
 func (r *PeriodsRepository) GetCount(_ context.Context) (uint64, error) {
-	r.RLock()
-	defer r.RUnlock()
-
 	return uint64(len(r.periods)), nil
 }

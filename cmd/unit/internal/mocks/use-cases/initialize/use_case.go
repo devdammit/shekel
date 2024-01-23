@@ -41,21 +41,6 @@ func (m *MockPeriodsRepository) EXPECT() *MockPeriodsRepositoryMockRecorder {
 	return m.recorder
 }
 
-// Create mocks base method.
-func (m *MockPeriodsRepository) Create(ctx context.Context, period entities.Period) (*entities.Period, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, period)
-	ret0, _ := ret[0].(*entities.Period)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Create indicates an expected call of Create.
-func (mr *MockPeriodsRepositoryMockRecorder) Create(ctx, period any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockPeriodsRepository)(nil).Create), ctx, period)
-}
-
 // GetCount mocks base method.
 func (m *MockPeriodsRepository) GetCount(ctx context.Context) (uint64, error) {
 	m.ctrl.T.Helper()
@@ -71,41 +56,67 @@ func (mr *MockPeriodsRepositoryMockRecorder) GetCount(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCount", reflect.TypeOf((*MockPeriodsRepository)(nil).GetCount), ctx)
 }
 
-// MockAppConfig is a mock of AppConfig interface.
-type MockAppConfig struct {
+// MockUnitOfWork is a mock of UnitOfWork interface.
+type MockUnitOfWork struct {
 	ctrl     *gomock.Controller
-	recorder *MockAppConfigMockRecorder
+	recorder *MockUnitOfWorkMockRecorder
 }
 
-// MockAppConfigMockRecorder is the mock recorder for MockAppConfig.
-type MockAppConfigMockRecorder struct {
-	mock *MockAppConfig
+// MockUnitOfWorkMockRecorder is the mock recorder for MockUnitOfWork.
+type MockUnitOfWorkMockRecorder struct {
+	mock *MockUnitOfWork
 }
 
-// NewMockAppConfig creates a new mock instance.
-func NewMockAppConfig(ctrl *gomock.Controller) *MockAppConfig {
-	mock := &MockAppConfig{ctrl: ctrl}
-	mock.recorder = &MockAppConfigMockRecorder{mock}
+// NewMockUnitOfWork creates a new mock instance.
+func NewMockUnitOfWork(ctrl *gomock.Controller) *MockUnitOfWork {
+	mock := &MockUnitOfWork{ctrl: ctrl}
+	mock.recorder = &MockUnitOfWorkMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockAppConfig) EXPECT() *MockAppConfigMockRecorder {
+func (m *MockUnitOfWork) EXPECT() *MockUnitOfWorkMockRecorder {
 	return m.recorder
 }
 
-// SetStartDate mocks base method.
-func (m *MockAppConfig) SetStartDate(ctx context.Context, date datetime.Date) error {
+// Commit mocks base method.
+func (m *MockUnitOfWork) Commit(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetStartDate", ctx, date)
+	ret := m.ctrl.Call(m, "Commit", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SetStartDate indicates an expected call of SetStartDate.
-func (mr *MockAppConfigMockRecorder) SetStartDate(ctx, date any) *gomock.Call {
+// Commit indicates an expected call of Commit.
+func (mr *MockUnitOfWorkMockRecorder) Commit(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStartDate", reflect.TypeOf((*MockAppConfig)(nil).SetStartDate), ctx, date)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*MockUnitOfWork)(nil).Commit), ctx)
+}
+
+// CreatePeriod mocks base method.
+func (m *MockUnitOfWork) CreatePeriod(period entities.Period) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreatePeriod", period)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreatePeriod indicates an expected call of CreatePeriod.
+func (mr *MockUnitOfWorkMockRecorder) CreatePeriod(period any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePeriod", reflect.TypeOf((*MockUnitOfWork)(nil).CreatePeriod), period)
+}
+
+// SetStartDate mocks base method.
+func (m *MockUnitOfWork) SetStartDate(date datetime.Date) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetStartDate", date)
+}
+
+// SetStartDate indicates an expected call of SetStartDate.
+func (mr *MockUnitOfWorkMockRecorder) SetStartDate(date any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStartDate", reflect.TypeOf((*MockUnitOfWork)(nil).SetStartDate), date)
 }
 
 // MockDateTimeProvider is a mock of DateTimeProvider interface.

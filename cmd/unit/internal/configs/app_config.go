@@ -5,6 +5,5 @@ import (
 )
 
 type AppConfig struct {
-	DateStart   *datetime.Date `json:"financial_date_start"`
-	Initialized bool           `json:"initialized"`
+	DateStart *datetime.Date `json:"financial_date_start"`
 }

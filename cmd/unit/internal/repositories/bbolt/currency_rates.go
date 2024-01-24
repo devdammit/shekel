@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	port "github.com/devdammit/shekel/cmd/unit/internal/ports/repositories/currency-rates"
 	"github.com/devdammit/shekel/internal/resources"
 	"github.com/devdammit/shekel/pkg/currency"

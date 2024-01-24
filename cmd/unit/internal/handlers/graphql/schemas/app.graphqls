@@ -1,0 +1,6 @@
+
+type App {
+    initialized: Boolean!
+    activePeriod: Period
+    version: String!
+}

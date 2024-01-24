@@ -1,8 +1,9 @@
 package pointer
 
 import (
-	"github.com/devdammit/shekel/pkg/types/datetime"
 	"time"
+
+	"github.com/devdammit/shekel/pkg/types/datetime"
 )
 
 func Ptr[T any](x T) *T {

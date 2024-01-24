@@ -2,21 +2,22 @@ package gql
 
 import (
 	"fmt"
-	"github.com/devdammit/shekel/pkg/types/datetime"
 	"io"
 	"strconv"
+
+	"github.com/devdammit/shekel/pkg/types/datetime"
 )
 
 type Date struct {
 	datetime.Date
 }
 
-// MarshalGQL implements the graphql.Marshaler interface
+// MarshalGQL implements the graphql.Marshaler interface.
 func (d Date) MarshalGQL(w io.Writer) {
 	_, _ = w.Write([]byte(strconv.Quote(d.String()))) // nolint: errcheck
 }
 
-// UnmarshalGQL implements the graphql.Unmarshaler interface
+// UnmarshalGQL implements the graphql.Unmarshaler interface.
 func (d *Date) UnmarshalGQL(v interface{}) error {
 	rawDate, ok := v.(string)
 	if !ok {
@@ -36,12 +37,16 @@ type DateTime struct {
 	datetime.DateTime
 }
 
-// MarshalGQL implements the graphql.Marshaler interface
+func FromDateTime(dt datetime.DateTime) DateTime {
+	return DateTime{dt}
+}
+
+// MarshalGQL implements the graphql.Marshaler interface.
 func (dt DateTime) MarshalGQL(w io.Writer) {
 	_, _ = w.Write([]byte(strconv.Quote(dt.String()))) // nolint: errcheck
 }
 
-// UnmarshalGQL implements the graphql.Unmarshaler interface
+// UnmarshalGQL implements the graphql.Unmarshaler interface.
 func (dt *DateTime) UnmarshalGQL(v interface{}) error {
 	rawDate, ok := v.(string)
 	if !ok {

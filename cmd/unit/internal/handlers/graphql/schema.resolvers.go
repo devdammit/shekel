@@ -26,11 +26,11 @@ func (r *mutationResolver) Initialize(ctx context.Context, startDate gql.Date) (
 	return true, nil
 }
 
-// AddAccount is the resolver for the AddAccount field.
-func (r *mutationResolver) AddAccount(ctx context.Context, contact model.CreateAccountInput) (bool, error) {
+// AddAccount is the resolver for the addAccount field.
+func (r *mutationResolver) AddAccount(ctx context.Context, account model.CreateAccountInput) (bool, error) {
 	var contactType entities.AccountType
 
-	switch contact.Type {
+	switch account.Type {
 	case model.AccountTypeCash:
 		contactType = entities.AccountTypeCash
 	case model.AccountTypeCredit:
@@ -38,16 +38,16 @@ func (r *mutationResolver) AddAccount(ctx context.Context, contact model.CreateA
 	case model.AccountTypeDebit:
 		contactType = entities.AccountTypeDebit
 	default:
-		return false, fmt.Errorf("invalid account type: %s", contact.Type)
+		return false, fmt.Errorf("invalid account type: %s", account.Type)
 	}
 
 	ok, err := r.UseCases.CreateAccount.Execute(ctx, port.CreateAccountParams{
-		Name:        contact.Name,
-		Description: contact.Description,
+		Name:        account.Name,
+		Description: account.Description,
 		Type:        contactType,
 		Balance: currency.Amount{
-			Value:        contact.Balance.Amount,
-			CurrencyCode: contact.Balance.Currency.Code,
+			Value:        account.Balance.Amount,
+			CurrencyCode: account.Balance.Currency.Code,
 		},
 	})
 	if err != nil {
@@ -57,9 +57,108 @@ func (r *mutationResolver) AddAccount(ctx context.Context, contact model.CreateA
 	return ok, nil
 }
 
+// AddContact is the resolver for the addContact field.
+func (r *mutationResolver) AddContact(ctx context.Context, contact model.AddContactInput, qrCode *model.QRCodeInput) (bool, error) {
+	req := port.CreateContactRequest{
+		Name: contact.Name,
+		Text: contact.Text,
+	}
+
+	if qrCode != nil {
+		req.QRCodes = append(req.QRCodes, port.ContactQRCode{
+			BankName: qrCode.Bank,
+			Image: port.ContactImage{
+				Content:     qrCode.File.File,
+				Name:        qrCode.File.Filename,
+				Size:        qrCode.File.Size,
+				ContentType: qrCode.File.ContentType,
+			},
+		})
+	}
+
+	err := r.UseCases.CreateContact.Execute(ctx, req)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// UpdateContact is the resolver for the updateContact field.
+func (r *mutationResolver) UpdateContact(ctx context.Context, name string, text string) (bool, error) {
+	err := r.UseCases.UpdateContact.Execute(ctx, port.UpdateContactRequest{
+		Name: name,
+		Text: text,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// RemoveContact is the resolver for the removeContact field.
+func (r *mutationResolver) RemoveContact(ctx context.Context, contactID uint64) (bool, error) {
+	err := r.UseCases.DeleteContact.Execute(ctx, contactID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// SetQRCodeToContact is the resolver for the setQRCodeToContact field.
+func (r *mutationResolver) SetQRCodeToContact(ctx context.Context, contactID uint64, qrCode model.QRCodeInput) (bool, error) {
+	err := r.UseCases.SetQRCodeToContact.Execute(ctx, contactID, port.ContactQRCode{
+		BankName: qrCode.Bank,
+		Image: port.ContactImage{
+			Content:     qrCode.File.File,
+			Name:        qrCode.File.Filename,
+			Size:        qrCode.File.Size,
+			ContentType: qrCode.File.ContentType,
+		},
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// RemoveQRCodeFromContact is the resolver for the removeQRCodeFromContact field.
+func (r *mutationResolver) RemoveQRCodeFromContact(ctx context.Context, contactID uint64, bankName string) (bool, error) {
+	err := r.UseCases.RemoveQRCodeFromContact.Execute(ctx, contactID, bankName)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 // Contacts is the resolver for the contacts field.
-func (r *queryResolver) Contacts(ctx context.Context) ([]*model.Contact, error) {
-	panic(fmt.Errorf("not implemented: Contacts - contacts"))
+func (r *queryResolver) Contacts(ctx context.Context, withDeleted *bool) ([]entities.Contact, error) {
+	return r.Reader.Contacts.GetAll(ctx, withDeleted)
+}
+
+// App is the resolver for the app field.
+func (r *queryResolver) App(ctx context.Context) (model.App, error) {
+	app, err := r.Reader.App.GetInfo(ctx)
+
+	if err != nil {
+		return model.App{}, err
+	}
+
+	return model.App{
+		Initialized:  app.Initialized,
+		Version:      app.Version,
+		ActivePeriod: app.ActivePeriod,
+	}, nil
+}
+
+// Periods is the resolver for the periods field.
+func (r *queryResolver) Periods(ctx context.Context, limit *uint64, offset *uint64) ([]entities.Period, error) {
+	return r.Reader.Periods.GetAll(ctx, limit, offset)
 }
 
 // Mutation returns MutationResolver implementation.

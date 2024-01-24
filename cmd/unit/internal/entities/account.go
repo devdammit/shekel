@@ -2,6 +2,7 @@ package entities
 
 import (
 	"errors"
+
 	"github.com/devdammit/shekel/pkg/currency"
 	"github.com/devdammit/shekel/pkg/types/datetime"
 )

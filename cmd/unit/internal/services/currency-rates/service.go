@@ -3,6 +3,7 @@ package currency_rates
 import (
 	"context"
 	"errors"
+
 	port "github.com/devdammit/shekel/cmd/unit/internal/ports/repositories/currency-rates"
 	"github.com/devdammit/shekel/pkg/currency"
 	openexchange "github.com/devdammit/shekel/pkg/open-exchange"

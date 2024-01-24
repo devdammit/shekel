@@ -3,19 +3,19 @@ package delete_contact
 import "context"
 
 type ContractsRepository interface {
-	DeleteContact(ctx context.Context, id uint64) error
+	Remove(ctx context.Context, id uint64) error
 }
 
-type DeleteContactUseCase struct {
+type UseCase struct {
 	contracts ContractsRepository
 }
 
-func NewDeleteContactUseCase(contracts ContractsRepository) *DeleteContactUseCase {
-	return &DeleteContactUseCase{
+func NewUseCase(contracts ContractsRepository) *UseCase {
+	return &UseCase{
 		contracts: contracts,
 	}
 }
 
-func (uc *DeleteContactUseCase) Handle(ctx context.Context, ID uint64) error {
-	return uc.contracts.DeleteContact(ctx, ID)
+func (uc *UseCase) Execute(ctx context.Context, ID uint64) error {
+	return uc.contracts.Remove(ctx, ID)
 }

@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/devdammit/shekel/pkg/currency"
-	"github.com/devdammit/shekel/pkg/types/datetime"
 	"io"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/devdammit/shekel/pkg/currency"
+	"github.com/devdammit/shekel/pkg/types/datetime"
 )
 
 type Client struct {

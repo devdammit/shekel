@@ -3,6 +3,8 @@ package update_invoice_test
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
 	mocks "github.com/devdammit/shekel/cmd/unit/internal/mocks/use-cases/update-invoice"
 	port "github.com/devdammit/shekel/cmd/unit/internal/ports/use-cases"
@@ -13,7 +15,6 @@ import (
 	"github.com/devdammit/shekel/pkg/types/datetime"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"testing"
 )
 
 func TestUpdateInvoiceUseCase_Execute(t *testing.T) {

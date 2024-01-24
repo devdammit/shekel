@@ -7,15 +7,28 @@ scalar Date
 scalar Uint64
 scalar Currency
 scalar Uint32
+scalar Upload
+
+directive @goField(
+    forceResolver: Boolean
+    name: String
+    omittable: Boolean
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 type Query {
-    contacts: [Contact!]!
+    contacts(withDeleted: Boolean): [Contact!]
+    app: App!
+    periods(limit: Uint64, offset: Uint64): [Period!]
 }
 
-
 type Mutation {
-    Initialize(startDate: Date!): Boolean!
-    AddAccount(contact: CreateAccountInput!): Boolean!
+    initialize(startDate: Date!): Boolean!
+    addAccount(account: CreateAccountInput!): Boolean!
+    addContact(contact: AddContactInput!, QRCode: QRCodeInput): Boolean!
+    updateContact(name: String!, text: String!): Boolean!
+    removeContact(contactID: Uint64!): Boolean!
+    setQRCodeToContact(contactID: Uint64!, QRCode: QRCodeInput!): Boolean!
+    removeQRCodeFromContact(contactID: Uint64!, bankName: String!): Boolean!
 }
 
 

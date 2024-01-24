@@ -1,11 +1,12 @@
 package planner_test
 
 import (
+	"testing"
+	"time"
+
 	"github.com/devdammit/shekel/pkg/planner"
 	"github.com/devdammit/shekel/pkg/pointer"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 var startAt = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -13,7 +14,6 @@ var endAt = time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
 
 func TestPlanner_GetDates(t *testing.T) {
 	t.Run("should return 12 days for daily planner with count 12", func(t *testing.T) {
-
 		p := planner.NewPlanner(1, planner.PlanRepeatIntervalDaily, endAt, startAt, pointer.Ptr(uint32(12)), nil)
 
 		dates, err := p.GetDates()

@@ -1,0 +1,8 @@
+
+type Period {
+    id: Uint64!
+    sequenceOfYear: Uint32!
+
+    createdAt: DateTime!
+    closedAt: DateTime
+}

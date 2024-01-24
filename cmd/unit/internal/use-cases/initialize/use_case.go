@@ -3,6 +3,7 @@ package initialize
 import (
 	"context"
 	"errors"
+
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
 	"github.com/devdammit/shekel/pkg/pointer"
 	"github.com/devdammit/shekel/pkg/types/datetime"
@@ -52,6 +53,8 @@ func (uc *UseCase) Execute(ctx context.Context, startDate datetime.Date) error {
 
 	uc.unit.SetStartDate(startDate)
 
+	sequenceOfYear := uint8(1)
+
 	for date := startDate; date.Before(uc.dateTime.Now().Time); date = datetime.NewDate(date.AddDate(0, 1, 0)) {
 		period := entities.Period{
 			CreatedAt: datetime.NewDateTime(date.Time),
@@ -63,10 +66,14 @@ func (uc *UseCase) Execute(ctx context.Context, startDate datetime.Date) error {
 			period.ClosedAt = pointer.Ptr(datetime.NewDateTime(date.AddDate(0, 1, 0)))
 		}
 
+		period.SequenceOfYear = sequenceOfYear
+
 		err = uc.unit.CreatePeriod(period)
 		if err != nil {
 			return err
 		}
+
+		sequenceOfYear++
 	}
 
 	err = uc.unit.Commit(ctx)

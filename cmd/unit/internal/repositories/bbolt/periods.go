@@ -3,8 +3,9 @@ package bbolt
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
-	port "github.com/devdammit/shekel/cmd/unit/internal/ports/repositories/periods"
+	port "github.com/devdammit/shekel/cmd/unit/internal/ports/repositories"
 	"github.com/devdammit/shekel/internal/resources"
 	"github.com/devdammit/shekel/pkg/log"
 	"github.com/devdammit/shekel/pkg/types/datetime"
@@ -18,8 +19,9 @@ type DateTimeProvider interface {
 }
 
 type PeriodsRepository struct {
-	db      *resources.Bolt
-	periods map[uint64]entities.Period
+	db   *resources.Bolt
+	data map[uint64]entities.Period
+	keys []uint64
 
 	dateTime DateTimeProvider
 }
@@ -27,7 +29,8 @@ type PeriodsRepository struct {
 func NewPeriodsRepository(db *resources.Bolt, provider DateTimeProvider) *PeriodsRepository {
 	return &PeriodsRepository{
 		db:       db,
-		periods:  make(map[uint64]entities.Period),
+		data:     make(map[uint64]entities.Period),
+		keys:     make([]uint64, 0),
 		dateTime: provider,
 	}
 }
@@ -63,7 +66,8 @@ func (r *PeriodsRepository) Start() error {
 				return err
 			}
 
-			r.periods[period.ID] = period
+			r.data[period.ID] = period
+			r.keys = append(r.keys, period.ID)
 
 			return nil
 		})
@@ -71,7 +75,7 @@ func (r *PeriodsRepository) Start() error {
 			return err
 		}
 
-		log.Info("periods loaded", log.Int("count", len(r.periods)))
+		log.Info("periods loaded", log.Int("count", len(r.data)))
 
 		return nil
 	})
@@ -107,7 +111,7 @@ func (r *PeriodsRepository) CreateTx(
 	tx *bbolt.Tx,
 	period entities.Period,
 ) (*entities.Period, error) {
-	if len(r.periods) != 0 && r.periods[uint64(len(r.periods)-1)].ClosedAt == nil {
+	if len(r.keys) != 0 && r.data[r.keys[len(r.keys)-1]].ClosedAt == nil {
 		return nil, port.ErrHasOpenedPeriod
 	}
 
@@ -126,11 +130,80 @@ func (r *PeriodsRepository) CreateTx(
 		return nil, err
 	}
 
-	r.periods[period.ID] = period
+	r.data[period.ID] = period
+	r.keys = append(r.keys, period.ID)
 
 	return &period, nil
 }
 
 func (r *PeriodsRepository) GetCount(_ context.Context) (uint64, error) {
-	return uint64(len(r.periods)), nil
+	return uint64(len(r.data)), nil
+}
+
+func (r *PeriodsRepository) GetLast(_ context.Context) (*entities.Period, error) {
+	var period entities.Period
+	if len(r.data) == 0 {
+		return nil, port.ErrNotFound
+	}
+
+	err := r.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(resources.BoltRootBucket).Bucket(PeriodsBucket)
+
+		c := b.Cursor()
+
+		_, v := c.Last()
+
+		err := json.Unmarshal(v, &period)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &period, nil
+}
+
+func (r *PeriodsRepository) GetAll(_ context.Context, limit *uint64, offset *uint64) ([]entities.Period, error) {
+	var periods []entities.Period
+
+	err := r.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(resources.BoltRootBucket).Bucket(PeriodsBucket)
+
+		c := b.Cursor()
+
+		var i uint64
+		for k, v := c.Last(); k != nil; k, v = c.Prev() {
+			if limit != nil && uint64(len(periods)) >= *limit {
+				break
+			}
+
+			if offset != nil && i < *offset {
+				i++
+				continue
+			}
+
+			var period entities.Period
+
+			err := json.Unmarshal(v, &period)
+			if err != nil {
+				return err
+			}
+
+			periods = append(periods, period)
+
+			i++
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return periods, nil
 }

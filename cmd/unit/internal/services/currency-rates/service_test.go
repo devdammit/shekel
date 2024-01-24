@@ -2,6 +2,8 @@ package currency_rates_test
 
 import (
 	"context"
+	"testing"
+
 	mocks "github.com/devdammit/shekel/cmd/unit/internal/mocks/services/currency-rates"
 	port "github.com/devdammit/shekel/cmd/unit/internal/ports/repositories/currency-rates"
 	currency_rates "github.com/devdammit/shekel/cmd/unit/internal/services/currency-rates"
@@ -10,7 +12,6 @@ import (
 	"github.com/devdammit/shekel/pkg/types/datetime"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"testing"
 )
 
 func TestService_Convert(t *testing.T) {

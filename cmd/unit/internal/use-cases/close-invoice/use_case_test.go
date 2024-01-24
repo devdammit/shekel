@@ -2,13 +2,14 @@ package close_invoice_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
 	mocks "github.com/devdammit/shekel/cmd/unit/internal/mocks/use-cases/close-invoice"
 	close_invoice "github.com/devdammit/shekel/cmd/unit/internal/use-cases/close-invoice"
 	"github.com/devdammit/shekel/pkg/types/datetime"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"testing"
 )
 
 func TestUseCase_Execute(t *testing.T) {

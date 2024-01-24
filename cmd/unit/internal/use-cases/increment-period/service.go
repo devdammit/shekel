@@ -3,11 +3,12 @@ package increment_period
 import (
 	"context"
 	"fmt"
-	"github.com/devdammit/shekel/cmd/unit/internal/use-cases/increment-period/units"
-	"github.com/devdammit/shekel/pkg/log"
 	"regexp"
 	"runtime/debug"
 	"time"
+
+	"github.com/devdammit/shekel/cmd/unit/internal/use-cases/increment-period/units"
+	"github.com/devdammit/shekel/pkg/log"
 )
 
 type Service struct {

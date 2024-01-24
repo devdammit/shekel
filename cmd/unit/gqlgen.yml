@@ -9,6 +9,9 @@ model:
   filename: internal/handlers/graphql/model/models_gen.go
   package: model
 
+omit_slice_element_pointers: true
+resolvers_always_return_pointers: false
+
 resolver:
     layout: follow-schema
     dir: internal/handlers/graphql
@@ -46,3 +49,20 @@ models:
 
   Float64:
     model: github.com/99designs/gqlgen/graphql.Float64
+
+  Period:
+    model: github.com/devdammit/shekel/cmd/unit/internal/entities.Period
+
+  Account:
+    model: github.com/devdammit/shekel/cmd/unit/internal/entities.Account
+
+  Transaction:
+    model: github.com/devdammit/shekel/cmd/unit/internal/entities.Transaction
+
+  Contact:
+    model: github.com/devdammit/shekel/cmd/unit/internal/entities.Contact
+
+
+directives:
+  constraint:
+    skip_runtime: true

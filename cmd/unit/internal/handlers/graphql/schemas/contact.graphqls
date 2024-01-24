@@ -1,10 +1,22 @@
 type Contact {
     id: Uint64!
     name: String!
-
     text: String!
+    qrCodes: [String!]
+
     deletedAt: DateTime
     createdAt: DateTime!
     updatedAt: DateTime!
+}
+
+
+input QRCodeInput {
+    file: Upload!
+    bank: String!
+}
+
+input AddContactInput {
+    name: String!
+    text: String!
 }
 

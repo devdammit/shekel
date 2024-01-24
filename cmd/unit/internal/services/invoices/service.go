@@ -3,10 +3,11 @@ package invoices
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
 	"github.com/devdammit/shekel/pkg/planner"
 	"github.com/devdammit/shekel/pkg/types/datetime"
-	"time"
 )
 
 type AppConfig interface {
@@ -21,7 +22,11 @@ type Service struct {
 	AppConfig AppConfig
 }
 
-func (s *Service) GetScheduledInvoices(_ context.Context, startAt datetime.Date, template entities.InvoiceTemplate) ([]entities.Invoice, error) {
+func (s *Service) GetScheduledInvoices(
+	_ context.Context,
+	startAt datetime.Date,
+	template entities.InvoiceTemplate,
+) ([]entities.Invoice, error) {
 	if template.Date.Before(startAt.Time) && template.RepeatPlanner == nil {
 		return nil, errors.New("no invoices to create")
 	}

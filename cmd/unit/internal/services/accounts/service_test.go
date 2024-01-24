@@ -2,13 +2,14 @@ package accounts_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
 	mocks "github.com/devdammit/shekel/cmd/unit/internal/mocks/services"
 	service "github.com/devdammit/shekel/cmd/unit/internal/services/accounts"
 	"github.com/devdammit/shekel/pkg/currency"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"testing"
 )
 
 func TestService_CalculateBalances(t *testing.T) {

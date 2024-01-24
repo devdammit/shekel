@@ -42,6 +42,7 @@ func IsAlive() bool {
 	return alive
 }
 
+//nolint:gochecknoinits
 func init() {
 	SetAlive(true)
 }
@@ -124,7 +125,7 @@ func NewHTTPServer(addr string, shutdownTimeout time.Duration, router http.Handl
 		conns:  make(map[net.Conn]http.ConnState),
 		states: make(map[http.ConnState][]net.Conn),
 	}
-	// nolint gosec
+	//nolint gosec
 	// FIXME: enable ReadHeaderTimeout after https://github.com/golang/go/issues/54784 is resolved
 	srv := &http.Server{
 		Addr:    addr,

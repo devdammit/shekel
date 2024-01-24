@@ -1,10 +1,11 @@
 package entities
 
 import (
+	"time"
+
 	"github.com/devdammit/shekel/pkg/currency"
 	"github.com/devdammit/shekel/pkg/planner"
 	"github.com/devdammit/shekel/pkg/types/datetime"
-	"time"
 )
 
 type RepeatPlanner struct {

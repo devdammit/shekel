@@ -7,18 +7,14 @@ import (
 	"io"
 	"strconv"
 
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/devdammit/shekel/cmd/unit/internal/entities"
 	"github.com/devdammit/shekel/pkg/gql"
 )
 
-type Account struct {
-	ID          uint64        `json:"id"`
-	Name        string        `json:"name"`
-	Description *string       `json:"description,omitempty"`
-	Type        AccountType   `json:"Type"`
-	Balance     *Amount       `json:"Balance"`
-	DeletedAt   *gql.DateTime `json:"deletedAt,omitempty"`
-	CreatedAt   gql.DateTime  `json:"createdAt"`
-	UpdatedAt   gql.DateTime  `json:"updatedAt"`
+type AddContactInput struct {
+	Name string `json:"name"`
+	Text string `json:"text"`
 }
 
 type Amount struct {
@@ -31,13 +27,10 @@ type AmountInput struct {
 	Currency gql.Currency `json:"currency"`
 }
 
-type Contact struct {
-	ID        uint64        `json:"id"`
-	Name      string        `json:"name"`
-	Text      string        `json:"text"`
-	DeletedAt *gql.DateTime `json:"deletedAt,omitempty"`
-	CreatedAt gql.DateTime  `json:"createdAt"`
-	UpdatedAt gql.DateTime  `json:"updatedAt"`
+type App struct {
+	Initialized  bool             `json:"initialized"`
+	ActivePeriod *entities.Period `json:"activePeriod,omitempty"`
+	Version      string           `json:"version"`
 }
 
 type CreateAccountInput struct {
@@ -48,35 +41,40 @@ type CreateAccountInput struct {
 }
 
 type Invoice struct {
-	ID           uint64           `json:"id"`
-	Name         string           `json:"name"`
-	Description  *string          `json:"description,omitempty"`
-	Status       InvoiceStatus    `json:"status"`
-	Type         InvoiceType      `json:"type"`
-	Template     *InvoiceTemplate `json:"template,omitempty"`
-	Contact      *Contact         `json:"contact,omitempty"`
-	Transactions []*Transaction   `json:"transactions,omitempty"`
-	Amount       *Amount          `json:"amount"`
-	Date         *gql.DateTime    `json:"date,omitempty"`
-	CreatedAt    gql.DateTime     `json:"createdAt"`
-	UpdatedAt    gql.DateTime     `json:"updatedAt"`
+	ID           uint64                  `json:"id"`
+	Name         string                  `json:"name"`
+	Description  *string                 `json:"description,omitempty"`
+	Status       InvoiceStatus           `json:"status"`
+	Type         InvoiceType             `json:"type"`
+	Template     *InvoiceTemplate        `json:"template,omitempty"`
+	Contact      *entities.Contact       `json:"contact,omitempty"`
+	Transactions []*entities.Transaction `json:"transactions,omitempty"`
+	Amount       *Amount                 `json:"amount"`
+	Date         *gql.DateTime           `json:"date,omitempty"`
+	CreatedAt    gql.DateTime            `json:"createdAt"`
+	UpdatedAt    gql.DateTime            `json:"updatedAt"`
 }
 
 type InvoiceTemplate struct {
-	ID            uint64         `json:"id"`
-	Name          string         `json:"name"`
-	Description   *string        `json:"description,omitempty"`
-	Type          InvoiceType    `json:"type"`
-	Amount        *Amount        `json:"amount"`
-	RepeatPlanner *RepeatPlanner `json:"repeatPlanner,omitempty"`
-	Contact       *Contact       `json:"contact,omitempty"`
-	Date          gql.DateTime   `json:"date"`
-	DeletedAt     *gql.DateTime  `json:"deletedAt,omitempty"`
-	CreatedAt     gql.DateTime   `json:"createdAt"`
-	UpdatedAt     gql.DateTime   `json:"updatedAt"`
+	ID            uint64            `json:"id"`
+	Name          string            `json:"name"`
+	Description   *string           `json:"description,omitempty"`
+	Type          InvoiceType       `json:"type"`
+	Amount        *Amount           `json:"amount"`
+	RepeatPlanner *RepeatPlanner    `json:"repeatPlanner,omitempty"`
+	Contact       *entities.Contact `json:"contact,omitempty"`
+	Date          gql.DateTime      `json:"date"`
+	DeletedAt     *gql.DateTime     `json:"deletedAt,omitempty"`
+	CreatedAt     gql.DateTime      `json:"createdAt"`
+	UpdatedAt     gql.DateTime      `json:"updatedAt"`
 }
 
 type Mutation struct {
+}
+
+type QRCodeInput struct {
+	File graphql.Upload `json:"file"`
+	Bank string         `json:"bank"`
 }
 
 type Query struct {
@@ -88,14 +86,6 @@ type RepeatPlanner struct {
 	DaysOfWeek    []*uint32  `json:"daysOfWeek,omitempty"`
 	EndDate       *gql.Date  `json:"endDate,omitempty"`
 	EndCount      *uint32    `json:"endCount,omitempty"`
-}
-
-type Transaction struct {
-	ID        uint64       `json:"id"`
-	Amount    *Amount      `json:"amount"`
-	From      *Account     `json:"from,omitempty"`
-	To        *Account     `json:"to,omitempty"`
-	CreatedAt gql.DateTime `json:"createdAt"`
 }
 
 type AccountType string

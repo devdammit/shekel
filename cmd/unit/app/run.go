@@ -2,6 +2,18 @@ package app
 
 import (
 	"flag"
+	"github.com/devdammit/shekel/cmd/unit/internal/handlers/fileserve"
+	"github.com/devdammit/shekel/cmd/unit/internal/services/app"
+	"github.com/devdammit/shekel/cmd/unit/internal/services/qrcodes"
+	create_contact "github.com/devdammit/shekel/cmd/unit/internal/use-cases/create-contact"
+	delete_contact "github.com/devdammit/shekel/cmd/unit/internal/use-cases/delete-contact"
+	remove_qrcode_from_contact "github.com/devdammit/shekel/cmd/unit/internal/use-cases/remove-qrcode-from-contact"
+	set_qrcode_to_contact "github.com/devdammit/shekel/cmd/unit/internal/use-cases/set-qrcode-to-contact"
+	update_contact "github.com/devdammit/shekel/cmd/unit/internal/use-cases/update-contact"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/devdammit/shekel/cmd/unit/internal/handlers/graphql"
 	boltrepo "github.com/devdammit/shekel/cmd/unit/internal/repositories/bbolt"
 	uowbolt "github.com/devdammit/shekel/cmd/unit/internal/uow/bbolt"
@@ -9,9 +21,6 @@ import (
 	"github.com/devdammit/shekel/internal/resources"
 	"github.com/devdammit/shekel/pkg/service"
 	"github.com/devdammit/shekel/pkg/types/datetime"
-	"os"
-	"sync"
-	"time"
 )
 
 const appName = "shekel_unit"
@@ -35,17 +44,35 @@ func Run() *sync.WaitGroup {
 
 	appConfig := boltrepo.NewAppConfigRepository(bbolt)
 	periodsRepo := boltrepo.NewPeriodsRepository(bbolt, datetime.DateTimeProvider{})
+	contactsRepo := boltrepo.NewContactsRepository(bbolt)
 
 	initializeUow := uowbolt.NewInitializeUow(bbolt, appConfig, periodsRepo)
 
+	appSrv := app.NewService(periodsRepo)
+	qrCodesSrv := qrcodes.NewService(contactsRepo)
+
 	return service.RunWait(
 		resources.NewService(bbolt),
-		boltrepo.NewService(appConfig, periodsRepo),
+		boltrepo.NewService(appConfig, periodsRepo, contactsRepo),
 		graphql.NewServer(*addr, *shutdownTimeout, &graphql.Resolver{
 			UseCases: graphql.UseCases{
-				Initialize: initialize.NewUseCase(periodsRepo, datetime.DateTimeProvider{}, initializeUow),
+				Initialize:    initialize.NewUseCase(periodsRepo, datetime.DateTimeProvider{}, initializeUow),
+				CreateContact: create_contact.NewUseCase(contactsRepo, qrCodesSrv),
+				SetQRCodeToContact: set_qrcode_to_contact.NewUseCase(
+					contactsRepo,
+					qrCodesSrv,
+				),
+				RemoveQRCodeFromContact: remove_qrcode_from_contact.NewUseCase(contactsRepo),
+				DeleteContact:           delete_contact.NewUseCase(contactsRepo),
+				UpdateContact:           update_contact.NewUseCase(contactsRepo),
 				//CreateAccount: create_account.NewUseCase(), @TODO waiting repository implementation
 			},
+			Reader: graphql.Reader{
+				Contacts: contactsRepo,
+				App:      appSrv,
+				Periods:  periodsRepo,
+			},
 		}),
+		fileserve.NewServer(":8081", *shutdownTimeout, qrCodesSrv),
 	)
 }

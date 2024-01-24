@@ -15,7 +15,7 @@ type Code struct {
 	xcurrency.Unit
 }
 
-// NewCode constructs Code from the provided string
+// NewCode constructs Code from the provided string.
 func NewCode(code string) (Code, error) {
 	var ret Code
 	err := ret.FromString(code)
@@ -85,7 +85,7 @@ func (cc Code) EncodeValues(key string, v *url.Values) error {
 	return nil
 }
 
-// Currency amount
+// Currency amount.
 type Amount struct {
 	// Currency in which the price is presented
 	CurrencyCode Code `json:"currency_code" swaggen:"required,type=string,format=currency"`
@@ -120,7 +120,7 @@ func (a Amount) IsNegative() bool {
 	return a.Value < 0
 }
 
-// FullRates to convert from one currency to another. Example: 1 USD = Rates[RUB][USD] * 1 = 77.374996 * 1 = 77.374996 RUB
+// FullRates to convert from one currency to another. Example: 1 USD = Rates[RUB][USD] * 1 = 77.374996 * 1 = 77.374996 RUB.
 type FullRates map[Code]Rates
 
 func (rates FullRates) Convert(amount *Amount, to Code) (*Amount, error) {

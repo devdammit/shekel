@@ -1,6 +1,7 @@
 package create_account
 
 import (
+	"context"
 	"errors"
 
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
@@ -8,7 +9,7 @@ import (
 )
 
 type Repository interface {
-	Create(account *entities.Account) (*entities.Account, error)
+	Create(ctx context.Context, account *entities.Account) (*entities.Account, error)
 }
 
 type CreateAccountUseCase struct {
@@ -21,7 +22,7 @@ func NewUseCase(repo Repository) *CreateAccountUseCase {
 	}
 }
 
-func (u *CreateAccountUseCase) Execute(params port.CreateAccountParams) (bool, error) {
+func (u *CreateAccountUseCase) Execute(ctx context.Context, params port.CreateAccountParams) (bool, error) {
 	account := &entities.Account{
 		Name:        params.Name,
 		Description: params.Description,
@@ -29,7 +30,7 @@ func (u *CreateAccountUseCase) Execute(params port.CreateAccountParams) (bool, e
 		Balance:     params.Balance,
 	}
 
-	_, err := u.repo.Create(account)
+	_, err := u.repo.Create(ctx, account)
 	if err != nil {
 		if errors.Is(err, entities.ErrorAccountExists) {
 			return false, errors.New("account already exists")

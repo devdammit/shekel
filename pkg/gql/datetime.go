@@ -40,6 +40,9 @@ type DateTime struct {
 func FromDateTime(dt datetime.DateTime) DateTime {
 	return DateTime{dt}
 }
+func FromDate(dt datetime.Date) Date {
+	return Date{dt}
+}
 
 // MarshalGQL implements the graphql.Marshaler interface.
 func (dt DateTime) MarshalGQL(w io.Writer) {

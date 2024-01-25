@@ -1,6 +1,7 @@
 package bbolt
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -17,7 +18,7 @@ var AccountsBucket = []byte("accounts")
 type AccountsRepository struct {
 	db   *resources.Bolt
 	data map[uint64]entities.Account
-	*sync.RWMutex
+	sync.RWMutex
 }
 
 func NewAccountsRepository(bolt *resources.Bolt) *AccountsRepository {
@@ -25,6 +26,10 @@ func NewAccountsRepository(bolt *resources.Bolt) *AccountsRepository {
 		db:   bolt,
 		data: make(map[uint64]entities.Account),
 	}
+}
+
+func (r *AccountsRepository) GetName() string {
+	return "accounts"
 }
 
 func (r *AccountsRepository) Start() error {
@@ -74,7 +79,7 @@ func (r *AccountsRepository) Start() error {
 	})
 }
 
-func (r *AccountsRepository) Create(account *entities.Account) (*entities.Account, error) {
+func (r *AccountsRepository) Create(_ context.Context, account *entities.Account) (*entities.Account, error) {
 	err := r.db.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(resources.BoltRootBucket).Bucket(AccountsBucket)
 
@@ -114,7 +119,7 @@ func (r *AccountsRepository) Create(account *entities.Account) (*entities.Accoun
 	return account, nil
 }
 
-func (r *AccountsRepository) GetByID(id uint64) (*entities.Account, error) {
+func (r *AccountsRepository) GetByID(_ context.Context, id uint64) (*entities.Account, error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -127,20 +132,24 @@ func (r *AccountsRepository) GetByID(id uint64) (*entities.Account, error) {
 	return &account, nil
 }
 
-func (r *AccountsRepository) GetAll() ([]entities.Account, error) {
+func (r *AccountsRepository) GetAll(ctx context.Context, withDeleted *bool) ([]entities.Account, error) {
 	r.RLock()
 	defer r.RUnlock()
 
 	accounts := make([]entities.Account, 0, len(r.data))
 
 	for _, account := range r.data {
+		if account.DeletedAt != nil && !*withDeleted {
+			continue
+		}
+
 		accounts = append(accounts, account)
 	}
 
 	return accounts, nil
 }
 
-func (r *AccountsRepository) Update(account *entities.Account) (*entities.Account, error) {
+func (r *AccountsRepository) Update(_ context.Context, account *entities.Account) (*entities.Account, error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -171,7 +180,7 @@ func (r *AccountsRepository) Update(account *entities.Account) (*entities.Accoun
 	return account, nil
 }
 
-func (r *AccountsRepository) Delete(id uint64) error {
+func (r *AccountsRepository) Delete(_ context.Context, id uint64) error {
 	r.Lock()
 	defer r.Unlock()
 

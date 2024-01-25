@@ -207,3 +207,12 @@ func (r *PeriodsRepository) GetAll(_ context.Context, limit *uint64, offset *uin
 
 	return periods, nil
 }
+
+func (r *PeriodsRepository) GetByID(_ context.Context, id uint64) (*entities.Period, error) {
+	period, ok := r.data[id]
+	if !ok {
+		return nil, port.ErrNotFound
+	}
+
+	return &period, nil
+}

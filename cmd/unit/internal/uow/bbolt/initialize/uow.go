@@ -1,4 +1,4 @@
-package bbolt
+package initialize
 
 import (
 	"context"
@@ -10,26 +10,26 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-type AppConfigRepository interface {
+type appConfigRepository interface {
 	SetStartDateTx(ctx context.Context, tx *bbolt.Tx, date datetime.Date) error
 }
 
-type PeriodsRepository interface {
+type periodsRepository interface {
 	CreateTx(ctx context.Context, tx *bbolt.Tx, period entities.Period) (*entities.Period, error)
 }
 
-type InitializeUow struct {
+type UoW struct {
 	startDate *datetime.Date
 	periods   []entities.Period
 
 	db *resources.Bolt
 
-	periodsRepo PeriodsRepository
-	appConfig   AppConfigRepository
+	periodsRepo periodsRepository
+	appConfig   appConfigRepository
 }
 
-func NewInitializeUow(db *resources.Bolt, repository AppConfigRepository, periodsRepository PeriodsRepository) *InitializeUow {
-	return &InitializeUow{
+func NewUoW(db *resources.Bolt, repository appConfigRepository, periodsRepository periodsRepository) *UoW {
+	return &UoW{
 		appConfig:   repository,
 		db:          db,
 		periodsRepo: periodsRepository,
@@ -37,17 +37,17 @@ func NewInitializeUow(db *resources.Bolt, repository AppConfigRepository, period
 	}
 }
 
-func (u *InitializeUow) SetStartDate(date datetime.Date) {
+func (u *UoW) SetStartDate(date datetime.Date) {
 	u.startDate = &date
 }
 
-func (u *InitializeUow) CreatePeriod(period entities.Period) error {
+func (u *UoW) CreatePeriod(period entities.Period) error {
 	u.periods = append(u.periods, period)
 
 	return nil
 }
 
-func (u *InitializeUow) Commit(ctx context.Context) error {
+func (u *UoW) Commit(ctx context.Context) error {
 	if u.startDate == nil || u.periods == nil {
 		return errors.New("missing data")
 	}

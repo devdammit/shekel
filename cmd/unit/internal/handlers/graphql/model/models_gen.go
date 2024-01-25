@@ -36,37 +36,27 @@ type App struct {
 type CreateAccountInput struct {
 	Name        string       `json:"name"`
 	Description *string      `json:"description,omitempty"`
-	Type        AccountType  `json:"Type"`
-	Balance     *AmountInput `json:"Balance"`
+	Type        AccountType  `json:"type"`
+	Balance     *AmountInput `json:"balance"`
 }
 
-type Invoice struct {
-	ID           uint64                  `json:"id"`
-	Name         string                  `json:"name"`
-	Description  *string                 `json:"description,omitempty"`
-	Status       InvoiceStatus           `json:"status"`
-	Type         InvoiceType             `json:"type"`
-	Template     *InvoiceTemplate        `json:"template,omitempty"`
-	Contact      *entities.Contact       `json:"contact,omitempty"`
-	Transactions []*entities.Transaction `json:"transactions,omitempty"`
-	Amount       *Amount                 `json:"amount"`
-	Date         *gql.DateTime           `json:"date,omitempty"`
-	CreatedAt    gql.DateTime            `json:"createdAt"`
-	UpdatedAt    gql.DateTime            `json:"updatedAt"`
+type CreateInvoiceInput struct {
+	Name        string              `json:"name"`
+	Description *string             `json:"description,omitempty"`
+	Plan        *RepeatPlannerInput `json:"plan,omitempty"`
+	Type        InvoiceType         `json:"type"`
+	Amount      *AmountInput        `json:"amount"`
+	ContactID   uint64              `json:"contactId"`
+	Date        gql.DateTime        `json:"date"`
 }
 
-type InvoiceTemplate struct {
-	ID            uint64            `json:"id"`
-	Name          string            `json:"name"`
-	Description   *string           `json:"description,omitempty"`
-	Type          InvoiceType       `json:"type"`
-	Amount        *Amount           `json:"amount"`
-	RepeatPlanner *RepeatPlanner    `json:"repeatPlanner,omitempty"`
-	Contact       *entities.Contact `json:"contact,omitempty"`
-	Date          gql.DateTime      `json:"date"`
-	DeletedAt     *gql.DateTime     `json:"deletedAt,omitempty"`
-	CreatedAt     gql.DateTime      `json:"createdAt"`
-	UpdatedAt     gql.DateTime      `json:"updatedAt"`
+type FindInvoiceByPeriod struct {
+	PeriodID    uint64           `json:"periodId"`
+	OnlyPending *bool            `json:"onlyPending,omitempty"`
+	OnlyPaid    *bool            `json:"onlyPaid,omitempty"`
+	Limit       *uint64          `json:"limit,omitempty"`
+	Offset      *uint64          `json:"offset,omitempty"`
+	OrderBy     *InvoicesOrderBy `json:"orderBy,omitempty"`
 }
 
 type Mutation struct {
@@ -80,12 +70,30 @@ type QRCodeInput struct {
 type Query struct {
 }
 
-type RepeatPlanner struct {
-	IntervalCount uint32     `json:"intervalCount"`
-	Interval      RepeatType `json:"interval"`
-	DaysOfWeek    []*uint32  `json:"daysOfWeek,omitempty"`
-	EndDate       *gql.Date  `json:"endDate,omitempty"`
-	EndCount      *uint32    `json:"endCount,omitempty"`
+type RepeatPlannerInput struct {
+	IntervalCount uint32             `json:"intervalCount"`
+	Interval      PlanRepeatInterval `json:"interval"`
+	DaysOfWeek    []uint32           `json:"daysOfWeek,omitempty"`
+	EndDate       *gql.Date          `json:"endDate,omitempty"`
+	EndCount      *uint32            `json:"endCount,omitempty"`
+}
+
+type UpdateAccountInput struct {
+	ID          uint64       `json:"id"`
+	Name        string       `json:"name"`
+	Description *string      `json:"description,omitempty"`
+	Balance     *AmountInput `json:"balance"`
+}
+
+type UpdateInvoiceInput struct {
+	ID          uint64              `json:"id"`
+	Name        string              `json:"name"`
+	Description *string             `json:"description,omitempty"`
+	Plan        *RepeatPlannerInput `json:"plan,omitempty"`
+	Type        InvoiceType         `json:"type"`
+	Amount      *AmountInput        `json:"amount"`
+	ContactID   uint64              `json:"contactId"`
+	Date        gql.DateTime        `json:"date"`
 }
 
 type AccountType string
@@ -134,8 +142,8 @@ func (e AccountType) MarshalGQL(w io.Writer) {
 type InvoiceStatus string
 
 const (
-	InvoiceStatusPending InvoiceStatus = "PENDING"
-	InvoiceStatusPaid    InvoiceStatus = "PAID"
+	InvoiceStatusPending InvoiceStatus = "Pending"
+	InvoiceStatusPaid    InvoiceStatus = "Paid"
 )
 
 var AllInvoiceStatus = []InvoiceStatus{
@@ -175,8 +183,8 @@ func (e InvoiceStatus) MarshalGQL(w io.Writer) {
 type InvoiceType string
 
 const (
-	InvoiceTypeIncome  InvoiceType = "INCOME"
-	InvoiceTypeExpense InvoiceType = "EXPENSE"
+	InvoiceTypeIncome  InvoiceType = "Income"
+	InvoiceTypeExpense InvoiceType = "Expense"
 )
 
 var AllInvoiceType = []InvoiceType{
@@ -213,47 +221,129 @@ func (e InvoiceType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type RepeatType string
+type InvoicesOrderBy string
 
 const (
-	RepeatTypeDaily   RepeatType = "DAILY"
-	RepeatTypeWeekly  RepeatType = "WEEKLY"
-	RepeatTypeMonthly RepeatType = "MONTHLY"
-	RepeatTypeYearly  RepeatType = "YEARLY"
+	InvoicesOrderByDateAsc  InvoicesOrderBy = "Date_ASC"
+	InvoicesOrderByDateDesc InvoicesOrderBy = "Date_DESC"
 )
 
-var AllRepeatType = []RepeatType{
-	RepeatTypeDaily,
-	RepeatTypeWeekly,
-	RepeatTypeMonthly,
-	RepeatTypeYearly,
+var AllInvoicesOrderBy = []InvoicesOrderBy{
+	InvoicesOrderByDateAsc,
+	InvoicesOrderByDateDesc,
 }
 
-func (e RepeatType) IsValid() bool {
+func (e InvoicesOrderBy) IsValid() bool {
 	switch e {
-	case RepeatTypeDaily, RepeatTypeWeekly, RepeatTypeMonthly, RepeatTypeYearly:
+	case InvoicesOrderByDateAsc, InvoicesOrderByDateDesc:
 		return true
 	}
 	return false
 }
 
-func (e RepeatType) String() string {
+func (e InvoicesOrderBy) String() string {
 	return string(e)
 }
 
-func (e *RepeatType) UnmarshalGQL(v interface{}) error {
+func (e *InvoicesOrderBy) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = RepeatType(str)
+	*e = InvoicesOrderBy(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid RepeatType", str)
+		return fmt.Errorf("%s is not a valid InvoicesOrderBy", str)
 	}
 	return nil
 }
 
-func (e RepeatType) MarshalGQL(w io.Writer) {
+func (e InvoicesOrderBy) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type OrderBy string
+
+const (
+	OrderByAsc  OrderBy = "ASC"
+	OrderByDesc OrderBy = "DESC"
+)
+
+var AllOrderBy = []OrderBy{
+	OrderByAsc,
+	OrderByDesc,
+}
+
+func (e OrderBy) IsValid() bool {
+	switch e {
+	case OrderByAsc, OrderByDesc:
+		return true
+	}
+	return false
+}
+
+func (e OrderBy) String() string {
+	return string(e)
+}
+
+func (e *OrderBy) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OrderBy(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrderBy", str)
+	}
+	return nil
+}
+
+func (e OrderBy) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type PlanRepeatInterval string
+
+const (
+	PlanRepeatIntervalDaily   PlanRepeatInterval = "Daily"
+	PlanRepeatIntervalWeekly  PlanRepeatInterval = "Weekly"
+	PlanRepeatIntervalMonthly PlanRepeatInterval = "Monthly"
+	PlanRepeatIntervalYearly  PlanRepeatInterval = "Yearly"
+)
+
+var AllPlanRepeatInterval = []PlanRepeatInterval{
+	PlanRepeatIntervalDaily,
+	PlanRepeatIntervalWeekly,
+	PlanRepeatIntervalMonthly,
+	PlanRepeatIntervalYearly,
+}
+
+func (e PlanRepeatInterval) IsValid() bool {
+	switch e {
+	case PlanRepeatIntervalDaily, PlanRepeatIntervalWeekly, PlanRepeatIntervalMonthly, PlanRepeatIntervalYearly:
+		return true
+	}
+	return false
+}
+
+func (e PlanRepeatInterval) String() string {
+	return string(e)
+}
+
+func (e *PlanRepeatInterval) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PlanRepeatInterval(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PlanRepeatInterval", str)
+	}
+	return nil
+}
+
+func (e PlanRepeatInterval) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

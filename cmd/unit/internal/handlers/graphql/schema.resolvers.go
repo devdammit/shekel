@@ -7,18 +7,67 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
 	"github.com/devdammit/shekel/cmd/unit/internal/handlers/graphql/model"
+	repoport "github.com/devdammit/shekel/cmd/unit/internal/ports/repositories"
 	port "github.com/devdammit/shekel/cmd/unit/internal/ports/use-cases"
 	"github.com/devdammit/shekel/pkg/currency"
 	"github.com/devdammit/shekel/pkg/gql"
+	"github.com/devdammit/shekel/pkg/planner"
+	"github.com/devdammit/shekel/pkg/pointer"
 	"github.com/devdammit/shekel/pkg/types/datetime"
 )
 
 // Initialize is the resolver for the initialize field.
 func (r *mutationResolver) Initialize(ctx context.Context, startDate gql.Date) (bool, error) {
 	err := r.UseCases.Initialize.Execute(ctx, datetime.NewDate(startDate.Time))
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// AddInvoice is the resolver for the addInvoice field.
+func (r *mutationResolver) AddInvoice(ctx context.Context, invoice model.CreateInvoiceInput) (bool, error) {
+	var interval *entities.RepeatPlanner
+
+	if invoice.Plan != nil {
+		interval = &entities.RepeatPlanner{
+			IntervalCount: invoice.Plan.IntervalCount,
+			EndCount:      invoice.Plan.EndCount,
+			Interval:      planner.PlanRepeatInterval(invoice.Plan.Interval),
+		}
+
+		if invoice.Plan.DaysOfWeek != nil {
+			interval.DaysOfWeek = make([]time.Weekday, len(invoice.Plan.DaysOfWeek))
+
+			for i, day := range invoice.Plan.DaysOfWeek {
+				interval.DaysOfWeek[i] = time.Weekday(day)
+			}
+		}
+
+		if invoice.Plan.EndDate != nil {
+			interval.EndDate = pointer.Ptr(datetime.NewDate(invoice.Plan.EndDate.Time))
+		}
+
+	}
+
+	err := r.UseCases.CreateInvoice.Execute(ctx, port.CreateInvoiceRequest{
+		Name:        invoice.Name,
+		Description: invoice.Description,
+		Plan:        interval,
+		Type:        entities.InvoiceType(invoice.Type),
+		ContactID:   invoice.ContactID,
+		Amount: currency.Amount{
+			Value:        invoice.Amount.Amount,
+			CurrencyCode: invoice.Amount.Currency.Code,
+		},
+		Date: datetime.NewDateTime(invoice.Date.Time),
+	})
+
 	if err != nil {
 		return false, err
 	}
@@ -97,6 +146,70 @@ func (r *mutationResolver) UpdateContact(ctx context.Context, name string, text 
 	return true, nil
 }
 
+// UpdateAccount is the resolver for the updateAccount field.
+func (r *mutationResolver) UpdateAccount(ctx context.Context, account model.UpdateAccountInput) (bool, error) {
+	ok, err := r.UseCases.UpdateAccount.Execute(ctx, account.ID, account.Name, account.Description, currency.Amount{
+		Value:        account.Balance.Amount,
+		CurrencyCode: account.Balance.Currency.Code,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return ok, nil
+}
+
+// UpdateInvoice is the resolver for the updateInvoice field.
+func (r *mutationResolver) UpdateInvoice(ctx context.Context, invoice model.UpdateInvoiceInput) (bool, error) {
+	var interval *entities.RepeatPlanner
+
+	if invoice.Plan != nil {
+		interval = &entities.RepeatPlanner{
+			IntervalCount: invoice.Plan.IntervalCount,
+			EndCount:      invoice.Plan.EndCount,
+			Interval:      planner.PlanRepeatInterval(invoice.Plan.Interval),
+		}
+
+		if invoice.Plan.DaysOfWeek != nil {
+			interval.DaysOfWeek = make([]time.Weekday, len(invoice.Plan.DaysOfWeek))
+
+			for i, day := range invoice.Plan.DaysOfWeek {
+				interval.DaysOfWeek[i] = time.Weekday(day)
+			}
+		}
+
+		if invoice.Plan.EndDate != nil {
+			interval.EndDate = pointer.Ptr(datetime.NewDate(invoice.Plan.EndDate.Time))
+		}
+
+	}
+
+	err := r.UseCases.UpdateInvoice.Execute(ctx, port.UpdateInvoiceRequest{
+		InvoiceID:   invoice.ID,
+		Name:        invoice.Name,
+		Description: invoice.Description,
+		Plan:        interval,
+		Type:        entities.InvoiceType(invoice.Type),
+		ContactID:   invoice.ContactID,
+		Amount: currency.Amount{
+			Value:        invoice.Amount.Amount,
+			CurrencyCode: invoice.Amount.Currency.Code,
+		},
+		Date: datetime.NewDateTime(invoice.Date.Time),
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// DeleteAccount is the resolver for the deleteAccount field.
+func (r *mutationResolver) DeleteAccount(ctx context.Context, id uint64) (bool, error) {
+	return r.UseCases.DeleteAccount.Execute(ctx, id)
+}
+
 // RemoveContact is the resolver for the removeContact field.
 func (r *mutationResolver) RemoveContact(ctx context.Context, contactID uint64) (bool, error) {
 	err := r.UseCases.DeleteContact.Execute(ctx, contactID)
@@ -136,11 +249,6 @@ func (r *mutationResolver) RemoveQRCodeFromContact(ctx context.Context, contactI
 	return true, nil
 }
 
-// Contacts is the resolver for the contacts field.
-func (r *queryResolver) Contacts(ctx context.Context, withDeleted *bool) ([]entities.Contact, error) {
-	return r.Reader.Contacts.GetAll(ctx, withDeleted)
-}
-
 // App is the resolver for the app field.
 func (r *queryResolver) App(ctx context.Context) (model.App, error) {
 	app, err := r.Reader.App.GetInfo(ctx)
@@ -154,6 +262,51 @@ func (r *queryResolver) App(ctx context.Context) (model.App, error) {
 		Version:      app.Version,
 		ActivePeriod: app.ActivePeriod,
 	}, nil
+}
+
+// Accounts is the resolver for the accounts field.
+func (r *queryResolver) Accounts(ctx context.Context, withDeleted *bool) ([]entities.Account, error) {
+	return r.Reader.Accounts.GetAll(ctx, withDeleted)
+}
+
+// Contacts is the resolver for the contacts field.
+func (r *queryResolver) Contacts(ctx context.Context, withDeleted *bool) ([]entities.Contact, error) {
+	return r.Reader.Contacts.GetAll(ctx, withDeleted)
+}
+
+// InvoicesByPeriod is the resolver for the invoicesByPeriod field.
+func (r *queryResolver) InvoicesByPeriod(ctx context.Context, params model.FindInvoiceByPeriod) ([]entities.Invoice, error) {
+	var req repoport.FindByDatesRequest
+
+	period, err := r.Reader.Periods.GetByID(ctx, params.PeriodID)
+	if err != nil {
+		return nil, err
+	}
+
+	if period.ClosedAt == nil {
+		estimatedEndDate, err := r.Services.Periods.GetEstimatedEndDate(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		req.EndedAt = estimatedEndDate
+	} else {
+		req.EndedAt = *period.ClosedAt
+	}
+
+	if params.OrderBy != nil {
+		switch *params.OrderBy {
+		case model.InvoicesOrderByDateDesc:
+			req.OrderBy = pointer.Ptr(repoport.OrderByDateDesc)
+		case model.InvoicesOrderByDateAsc:
+			req.OrderBy = pointer.Ptr(repoport.OrderByDateAsc)
+		}
+	}
+
+	req.Limit = params.Limit
+	req.Offset = params.Offset
+
+	return r.Reader.Invoices.FindByDates(ctx, req)
 }
 
 // Periods is the resolver for the periods field.

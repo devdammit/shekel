@@ -15,17 +15,28 @@ directive @goField(
     omittable: Boolean
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
+enum OrderBy {
+    ASC
+    DESC
+}
+
 type Query {
-    contacts(withDeleted: Boolean): [Contact!]
     app: App!
+    accounts(withDeleted: Boolean): [Account!]
+    contacts(withDeleted: Boolean): [Contact!]
+    invoicesByPeriod(params: FindInvoiceByPeriod!): [Invoice!]
     periods(limit: Uint64, offset: Uint64): [Period!]
 }
 
 type Mutation {
     initialize(startDate: Date!): Boolean!
+    addInvoice(invoice: CreateInvoiceInput!): Boolean!
     addAccount(account: CreateAccountInput!): Boolean!
     addContact(contact: AddContactInput!, QRCode: QRCodeInput): Boolean!
     updateContact(name: String!, text: String!): Boolean!
+    updateAccount(account: UpdateAccountInput!): Boolean!
+    updateInvoice(invoice: UpdateInvoiceInput!): Boolean!
+    deleteAccount(id: Uint64!): Boolean!
     removeContact(contactID: Uint64!): Boolean!
     setQRCodeToContact(contactID: Uint64!, QRCode: QRCodeInput!): Boolean!
     removeQRCodeFromContact(contactID: Uint64!, bankName: String!): Boolean!

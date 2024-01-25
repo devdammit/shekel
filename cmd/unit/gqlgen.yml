@@ -62,6 +62,15 @@ models:
   Contact:
     model: github.com/devdammit/shekel/cmd/unit/internal/entities.Contact
 
+  Invoice:
+    model: github.com/devdammit/shekel/cmd/unit/internal/entities.Invoice
+
+  InvoiceTemplate:
+    model: github.com/devdammit/shekel/cmd/unit/internal/entities.InvoiceTemplate
+
+  RepeatPlanner:
+    model: github.com/devdammit/shekel/cmd/unit/internal/entities.RepeatPlanner
+
 
 directives:
   constraint:

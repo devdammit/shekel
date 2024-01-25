@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/devdammit/shekel/cmd/unit/internal/configs"
 	"github.com/devdammit/shekel/internal/resources"
@@ -88,6 +89,21 @@ func (r *AppConfigRepository) GetStartDate() (*datetime.Date, error) {
 	}
 
 	return r.config.DateStart, nil
+}
+
+func (r *AppConfigRepository) GetFinancialYearStart() time.Time {
+	var result datetime.Date
+
+	startedAt := r.config.DateStart.Time
+	now := time.Now()
+
+	for d := startedAt; d.Before(now); d = d.AddDate(0, 1, 0) {
+		if now.Before(d.AddDate(0, 1, 0)) {
+			result = datetime.NewDate(d)
+		}
+	}
+
+	return result.Time
 }
 
 func (r *AppConfigRepository) SetStartDateTx(_ context.Context, tx *bbolt.Tx, date datetime.Date) error {

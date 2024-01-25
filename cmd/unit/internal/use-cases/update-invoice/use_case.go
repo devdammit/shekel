@@ -16,14 +16,6 @@ type PeriodsRepository interface {
 type InvoicesRepository interface {
 	GetByID(ctx context.Context, id uint64) (*entities.Invoice, error)
 	GetByTemplateID(ctx context.Context, id uint64) ([]entities.Invoice, error)
-	Update(ctx context.Context, invoice *entities.Invoice) (*entities.Invoice, error)
-	Delete(ctx context.Context, id uint64) error
-	BulkCreate(ctx context.Context, invoices []entities.Invoice) ([]entities.Invoice, error)
-}
-
-type InvoicesTemplateRepository interface {
-	Create(ctx context.Context, template *entities.InvoiceTemplate) (*entities.InvoiceTemplate, error)
-	Delete(ctx context.Context, id uint64) error
 }
 
 type ContactsRepository interface {
@@ -34,43 +26,53 @@ type InvoicesService interface {
 	GetScheduledInvoices(ctx context.Context, template entities.InvoiceTemplate) ([]entities.Invoice, error)
 }
 
-type Transactor interface {
-	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
-}
-
 type CalendarService interface {
 	Sync(ctx context.Context) error
 }
 
 type Logger interface {
-	Warn(ctx context.Context, fields ...log.Field)
+	Warn(msg string, fields ...log.Field)
 }
 
-type UpdateInvoiceUseCase struct {
-	periods    PeriodsRepository
-	invoices   InvoicesRepository
-	templates  InvoicesTemplateRepository
-	contacts   ContactsRepository
-	transactor Transactor
-	service    InvoicesService
-	calendar   CalendarService
-	logger     Logger
+type UnitOfWork interface {
+	CreateInvoices(invoices []entities.Invoice, template entities.InvoiceTemplate)
+	DeleteInvoice(id uint64)
+	DeleteTemplate(id uint64)
+	UpdateInvoice(invoice entities.Invoice)
+	Commit(ctx context.Context) error
 }
 
-func NewUpdateInvoiceUseCase(periods PeriodsRepository, invoices InvoicesRepository, templates InvoicesTemplateRepository, contacts ContactsRepository, transactor Transactor, service InvoicesService, calendar CalendarService, logger Logger) *UpdateInvoiceUseCase {
-	return &UpdateInvoiceUseCase{
-		periods:    periods,
-		invoices:   invoices,
-		templates:  templates,
-		contacts:   contacts,
-		transactor: transactor,
-		service:    service,
-		calendar:   calendar,
-		logger:     logger,
+type UseCase struct {
+	periods  PeriodsRepository
+	invoices InvoicesRepository
+	contacts ContactsRepository
+	service  InvoicesService
+	calendar CalendarService
+	logger   Logger
+	uow      UnitOfWork
+}
+
+func NewUseCase(
+	periods PeriodsRepository,
+	invoices InvoicesRepository,
+	contacts ContactsRepository,
+	service InvoicesService,
+	calendar CalendarService,
+	logger Logger,
+	uow UnitOfWork,
+) *UseCase {
+	return &UseCase{
+		periods:  periods,
+		invoices: invoices,
+		contacts: contacts,
+		service:  service,
+		calendar: calendar,
+		logger:   logger,
+		uow:      uow,
 	}
 }
 
-func (u *UpdateInvoiceUseCase) Execute(ctx context.Context, req *port.UpdateInvoiceRequest) error {
+func (u *UseCase) Execute(ctx context.Context, req port.UpdateInvoiceRequest) error {
 	period, err := u.periods.GetLast(ctx)
 	if err != nil {
 		return err
@@ -112,14 +114,16 @@ func (u *UpdateInvoiceUseCase) Execute(ctx context.Context, req *port.UpdateInvo
 	if req.Plan == nil {
 		invoice.Template = nil
 
-		_, err := u.invoices.Update(ctx, invoice)
+		u.uow.UpdateInvoice(*invoice)
+
+		err = u.uow.Commit(ctx)
 		if err != nil {
 			return err
 		}
 
 		err = u.calendar.Sync(ctx)
 		if err != nil {
-			u.logger.Warn(ctx, log.Err(err), log.String("message", "cannot sync calendar"))
+			u.logger.Warn("cannot sync calendar", log.Err(err))
 		}
 
 		return nil
@@ -130,68 +134,53 @@ func (u *UpdateInvoiceUseCase) Execute(ctx context.Context, req *port.UpdateInvo
 		return err
 	}
 
-	err = u.transactor.Transaction(ctx, func(ctx context.Context) error {
-		newTemplate, err := u.templates.Create(ctx, &entities.InvoiceTemplate{
-			Name:      invoice.Name,
-			Desc:      invoice.Desc,
-			Type:      invoice.Type,
-			Amount:    invoice.Amount,
-			ContactID: invoice.Contact.ID,
+	newTemplate := entities.InvoiceTemplate{
+		Name:      invoice.Name,
+		Desc:      invoice.Desc,
+		Type:      invoice.Type,
+		Amount:    invoice.Amount,
+		ContactID: invoice.Contact.ID,
 
-			Date: invoice.Date,
+		Date: invoice.Date,
 
-			RepeatPlanner: &entities.RepeatPlanner{
-				Interval:      req.Plan.Interval,
-				IntervalCount: req.Plan.IntervalCount,
-				DaysOfWeek:    req.Plan.DaysOfWeek,
-				EndDate:       req.Plan.EndDate,
-				EndCount:      req.Plan.EndCount,
-			},
-		})
-		if err != nil {
-			return err
+		RepeatPlanner: &entities.RepeatPlanner{
+			Interval:      req.Plan.Interval,
+			IntervalCount: req.Plan.IntervalCount,
+			DaysOfWeek:    req.Plan.DaysOfWeek,
+			EndDate:       req.Plan.EndDate,
+			EndCount:      req.Plan.EndCount,
+		},
+	}
+
+	u.uow.DeleteTemplate(invoice.Template.ID)
+
+	deletingInvoices := make([]entities.Invoice, 0, len(invoices))
+
+	for _, inv := range invoices {
+		if req.Date.After(inv.Date.Time) {
+			deletingInvoices = append(deletingInvoices, inv)
 		}
+	}
 
-		err = u.templates.Delete(ctx, invoice.Template.ID)
-		if err != nil {
-			return err
-		}
+	for _, inv := range deletingInvoices {
+		u.uow.DeleteInvoice(inv.ID)
+	}
 
-		deletingInvoices := make([]entities.Invoice, 0, len(invoices))
+	scheduledInvoices, err := u.service.GetScheduledInvoices(ctx, newTemplate)
+	if err != nil {
+		return err
+	}
 
-		for _, inv := range invoices {
-			if req.Date.After(inv.Date.Time) {
-				deletingInvoices = append(deletingInvoices, inv)
-			}
-		}
+	u.uow.CreateInvoices(scheduledInvoices, newTemplate)
 
-		for _, inv := range deletingInvoices {
-			err = u.invoices.Delete(ctx, inv.ID)
-			if err != nil {
-				return err
-			}
-		}
-
-		scheduledInvoices, err := u.service.GetScheduledInvoices(ctx, *newTemplate)
-		if err != nil {
-			return err
-		}
-
-		_, err = u.invoices.BulkCreate(ctx, scheduledInvoices)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
+	err = u.uow.Commit(ctx)
 	if err != nil {
 		return err
 	}
 
 	err = u.calendar.Sync(ctx)
 	if err != nil {
-		u.logger.Warn(ctx, log.Err(err), log.String("message", "cannot sync calendar"))
+		u.logger.Warn("cannot sync calendar", log.Err(err))
 	}
 
 	return nil

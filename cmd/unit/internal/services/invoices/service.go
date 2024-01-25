@@ -2,7 +2,6 @@ package invoices
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/devdammit/shekel/cmd/unit/internal/entities"
@@ -14,23 +13,20 @@ type AppConfig interface {
 	GetFinancialYearStart() time.Time
 }
 
-type Services struct {
+type Service struct {
+	AppConfig AppConfig
 }
 
-type Service struct {
-	Services  Services
-	AppConfig AppConfig
+func NewService(c AppConfig) *Service {
+	return &Service{
+		AppConfig: c,
+	}
 }
 
 func (s *Service) GetScheduledInvoices(
 	_ context.Context,
-	startAt datetime.Date,
 	template entities.InvoiceTemplate,
 ) ([]entities.Invoice, error) {
-	if template.Date.Before(startAt.Time) && template.RepeatPlanner == nil {
-		return nil, errors.New("no invoices to create")
-	}
-
 	if template.RepeatPlanner == nil {
 		return []entities.Invoice{
 			{

@@ -8,15 +8,15 @@ import (
 type InvoiceType string
 
 const (
-	InvoiceTypeIncome  InvoiceType = "income"
-	InvoiceTypeExpense InvoiceType = "expense"
+	InvoiceTypeIncome  InvoiceType = "Income"
+	InvoiceTypeExpense InvoiceType = "Expense"
 )
 
 type InvoiceStatus string
 
 const (
-	InvoiceStatusPending InvoiceStatus = "pending"
-	InvoiceStatusPaid    InvoiceStatus = "paid"
+	InvoiceStatusPending InvoiceStatus = "Pending"
+	InvoiceStatusPaid    InvoiceStatus = "Paid"
 )
 
 type Invoice struct {

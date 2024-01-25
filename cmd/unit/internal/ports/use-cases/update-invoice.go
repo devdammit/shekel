@@ -17,7 +17,7 @@ type UpdateInvoiceRequest struct {
 	Name        string
 	Description *string
 
-	Plan *InvoicePlan
+	Plan *entities.RepeatPlanner
 
 	Type      entities.InvoiceType
 	Amount    currency.Amount

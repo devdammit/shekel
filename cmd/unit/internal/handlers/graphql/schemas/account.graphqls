@@ -8,8 +8,8 @@ type Account {
     id: Uint64!
     name: String!
     description: String
-    Type: AccountType!
-    Balance: Amount!
+    type: AccountType!
+    balance: Amount!
 
     deletedAt: DateTime
     createdAt: DateTime!
@@ -20,6 +20,13 @@ type Account {
 input CreateAccountInput {
     name: String!
     description: String
-    Type: AccountType!
-    Balance: AmountInput!
+    type: AccountType!
+    balance: AmountInput!
+}
+
+input UpdateAccountInput {
+    id: Uint64!
+    name: String!
+    description: String
+    balance: AmountInput!
 }

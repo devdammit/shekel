@@ -8,10 +8,10 @@ import (
 type PlanRepeatInterval string
 
 const (
-	PlanRepeatIntervalDaily   PlanRepeatInterval = "daily"
-	PlanRepeatIntervalWeekly  PlanRepeatInterval = "weekly"
-	PlanRepeatIntervalMonthly PlanRepeatInterval = "monthly"
-	PlanRepeatIntervalYearly  PlanRepeatInterval = "yearly"
+	PlanRepeatIntervalDaily   PlanRepeatInterval = "Daily"
+	PlanRepeatIntervalWeekly  PlanRepeatInterval = "Weekly"
+	PlanRepeatIntervalMonthly PlanRepeatInterval = "Monthly"
+	PlanRepeatIntervalYearly  PlanRepeatInterval = "Yearly"
 )
 
 type Planner struct {

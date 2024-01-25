@@ -12,11 +12,6 @@ type InvoicesService interface {
 	GetScheduledInvoices(ctx context.Context, template entities.InvoiceTemplate) ([]entities.Invoice, error)
 }
 
-type InvoicesRepository interface {
-	CreateTemplate(ctx context.Context, template entities.InvoiceTemplate) (*entities.InvoiceTemplate, error)
-	BulkCreate(ctx context.Context, invoices []entities.Invoice) ([]entities.Invoice, error)
-}
-
 type PeriodsRepository interface {
 	GetLast(ctx context.Context) (*entities.Period, error)
 }
@@ -25,19 +20,25 @@ type CalendarService interface {
 	Sync(ctx context.Context) error
 }
 
+type UnitOfWork interface {
+	CreateInvoices(invoices []entities.Invoice, template entities.InvoiceTemplate)
+	CreateInvoice(invoice entities.Invoice)
+	Commit(ctx context.Context) error
+}
+
 type UseCase struct {
-	invoices InvoicesRepository
 	service  InvoicesService
 	periods  PeriodsRepository
 	calendar CalendarService
+	uow      UnitOfWork
 }
 
-func NewUseCase(invoices InvoicesRepository, service InvoicesService, periods PeriodsRepository, calendar CalendarService) *UseCase {
+func NewUseCase(service InvoicesService, periods PeriodsRepository, calendar CalendarService, work UnitOfWork) *UseCase {
 	return &UseCase{
-		invoices: invoices,
 		service:  service,
 		periods:  periods,
 		calendar: calendar,
+		uow:      work,
 	}
 }
 
@@ -82,24 +83,13 @@ func (u *UseCase) Execute(ctx context.Context, request port.CreateInvoiceRequest
 
 	if len(invoices) == 0 {
 		return errors.New("no invoices to create")
-	} else if len(invoices) > 1 {
-		entity, err := u.invoices.CreateTemplate(ctx, template)
-		if err != nil {
-			return err
-		}
-
-		template = *entity
+	} else if len(invoices) == 1 {
+		u.uow.CreateInvoice(invoices[0])
+	} else {
+		u.uow.CreateInvoices(invoices, template)
 	}
 
-	for _, invoice := range invoices {
-		invoice.Template = &template
-	}
-
-	if len(invoices) == 1 {
-		invoices[0].Template = nil
-	}
-
-	_, err = u.invoices.BulkCreate(ctx, invoices)
+	err = u.uow.Commit(ctx)
 	if err != nil {
 		return err
 	}

@@ -1,20 +1,20 @@
 
 enum InvoiceType {
-    INCOME
-    EXPENSE
+    Income
+    Expense
 }
 
-enum RepeatType {
-    DAILY
-    WEEKLY
-    MONTHLY
-    YEARLY
+enum PlanRepeatInterval {
+    Daily
+    Weekly
+    Monthly
+    Yearly
 }
 
 type RepeatPlanner {
     intervalCount: Uint32!
-    interval: RepeatType!
-    daysOfWeek: [Uint32]
+    interval: PlanRepeatInterval!
+    daysOfWeek: [Uint32!]
     endDate: Date
     endCount: Uint32
 }
@@ -22,7 +22,7 @@ type RepeatPlanner {
 type InvoiceTemplate {
     id: Uint64!
     name: String!
-    description: String
+    desc: String
     type: InvoiceType!
 
     amount: Amount!
@@ -40,14 +40,14 @@ type InvoiceTemplate {
 
 
 enum InvoiceStatus {
-    PENDING
-    PAID
+    Pending
+    Paid
 }
 
 type Invoice {
     id: Uint64!
     name: String!
-    description: String
+    desc: String
     status: InvoiceStatus!
     type: InvoiceType!
 
@@ -57,7 +57,52 @@ type Invoice {
 
     amount: Amount!
 
-    date: DateTime
+    date: DateTime!
     createdAt: DateTime!
     updatedAt: DateTime!
+}
+
+input RepeatPlannerInput {
+    intervalCount: Uint32!
+    interval: PlanRepeatInterval!
+    daysOfWeek: [Uint32!]
+    endDate: Date
+    endCount: Uint32
+}
+
+input CreateInvoiceInput {
+    name: String!
+    description: String
+    plan: RepeatPlannerInput
+    type: InvoiceType!
+    amount: AmountInput!
+    contactId: Uint64!
+
+    date: DateTime!
+}
+
+input UpdateInvoiceInput {
+    id: Uint64!
+    name: String!
+    description: String
+    plan: RepeatPlannerInput
+    type: InvoiceType!
+    amount: AmountInput!
+    contactId: Uint64!
+
+    date: DateTime!
+}
+
+enum InvoicesOrderBy {
+    Date_ASC
+    Date_DESC
+}
+
+input FindInvoiceByPeriod {
+    periodId: Uint64!
+    onlyPending: Boolean
+    onlyPaid: Boolean
+    limit: Uint64
+    offset: Uint64
+    orderBy: InvoicesOrderBy
 }

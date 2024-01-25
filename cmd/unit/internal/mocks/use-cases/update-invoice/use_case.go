@@ -79,35 +79,6 @@ func (m *MockInvoicesRepository) EXPECT() *MockInvoicesRepositoryMockRecorder {
 	return m.recorder
 }
 
-// BulkCreate mocks base method.
-func (m *MockInvoicesRepository) BulkCreate(ctx context.Context, invoices []entities.Invoice) ([]entities.Invoice, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BulkCreate", ctx, invoices)
-	ret0, _ := ret[0].([]entities.Invoice)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// BulkCreate indicates an expected call of BulkCreate.
-func (mr *MockInvoicesRepositoryMockRecorder) BulkCreate(ctx, invoices any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkCreate", reflect.TypeOf((*MockInvoicesRepository)(nil).BulkCreate), ctx, invoices)
-}
-
-// Delete mocks base method.
-func (m *MockInvoicesRepository) Delete(ctx context.Context, id uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Delete indicates an expected call of Delete.
-func (mr *MockInvoicesRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockInvoicesRepository)(nil).Delete), ctx, id)
-}
-
 // GetByID mocks base method.
 func (m *MockInvoicesRepository) GetByID(ctx context.Context, id uint64) (*entities.Invoice, error) {
 	m.ctrl.T.Helper()
@@ -136,73 +107,6 @@ func (m *MockInvoicesRepository) GetByTemplateID(ctx context.Context, id uint64)
 func (mr *MockInvoicesRepositoryMockRecorder) GetByTemplateID(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByTemplateID", reflect.TypeOf((*MockInvoicesRepository)(nil).GetByTemplateID), ctx, id)
-}
-
-// Update mocks base method.
-func (m *MockInvoicesRepository) Update(ctx context.Context, invoice *entities.Invoice) (*entities.Invoice, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ctx, invoice)
-	ret0, _ := ret[0].(*entities.Invoice)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Update indicates an expected call of Update.
-func (mr *MockInvoicesRepositoryMockRecorder) Update(ctx, invoice any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockInvoicesRepository)(nil).Update), ctx, invoice)
-}
-
-// MockInvoicesTemplateRepository is a mock of InvoicesTemplateRepository interface.
-type MockInvoicesTemplateRepository struct {
-	ctrl     *gomock.Controller
-	recorder *MockInvoicesTemplateRepositoryMockRecorder
-}
-
-// MockInvoicesTemplateRepositoryMockRecorder is the mock recorder for MockInvoicesTemplateRepository.
-type MockInvoicesTemplateRepositoryMockRecorder struct {
-	mock *MockInvoicesTemplateRepository
-}
-
-// NewMockInvoicesTemplateRepository creates a new mock instance.
-func NewMockInvoicesTemplateRepository(ctrl *gomock.Controller) *MockInvoicesTemplateRepository {
-	mock := &MockInvoicesTemplateRepository{ctrl: ctrl}
-	mock.recorder = &MockInvoicesTemplateRepositoryMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockInvoicesTemplateRepository) EXPECT() *MockInvoicesTemplateRepositoryMockRecorder {
-	return m.recorder
-}
-
-// Create mocks base method.
-func (m *MockInvoicesTemplateRepository) Create(ctx context.Context, template *entities.InvoiceTemplate) (*entities.InvoiceTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, template)
-	ret0, _ := ret[0].(*entities.InvoiceTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Create indicates an expected call of Create.
-func (mr *MockInvoicesTemplateRepositoryMockRecorder) Create(ctx, template any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockInvoicesTemplateRepository)(nil).Create), ctx, template)
-}
-
-// Delete mocks base method.
-func (m *MockInvoicesTemplateRepository) Delete(ctx context.Context, id uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Delete indicates an expected call of Delete.
-func (mr *MockInvoicesTemplateRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockInvoicesTemplateRepository)(nil).Delete), ctx, id)
 }
 
 // MockContactsRepository is a mock of ContactsRepository interface.
@@ -281,43 +185,6 @@ func (mr *MockInvoicesServiceMockRecorder) GetScheduledInvoices(ctx, template an
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetScheduledInvoices", reflect.TypeOf((*MockInvoicesService)(nil).GetScheduledInvoices), ctx, template)
 }
 
-// MockTransactor is a mock of Transactor interface.
-type MockTransactor struct {
-	ctrl     *gomock.Controller
-	recorder *MockTransactorMockRecorder
-}
-
-// MockTransactorMockRecorder is the mock recorder for MockTransactor.
-type MockTransactorMockRecorder struct {
-	mock *MockTransactor
-}
-
-// NewMockTransactor creates a new mock instance.
-func NewMockTransactor(ctrl *gomock.Controller) *MockTransactor {
-	mock := &MockTransactor{ctrl: ctrl}
-	mock.recorder = &MockTransactorMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockTransactor) EXPECT() *MockTransactorMockRecorder {
-	return m.recorder
-}
-
-// Transaction mocks base method.
-func (m *MockTransactor) Transaction(ctx context.Context, fn func(context.Context) error) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Transaction", ctx, fn)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Transaction indicates an expected call of Transaction.
-func (mr *MockTransactorMockRecorder) Transaction(ctx, fn any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Transaction", reflect.TypeOf((*MockTransactor)(nil).Transaction), ctx, fn)
-}
-
 // MockCalendarService is a mock of CalendarService interface.
 type MockCalendarService struct {
 	ctrl     *gomock.Controller
@@ -379,9 +246,9 @@ func (m *MockLogger) EXPECT() *MockLoggerMockRecorder {
 }
 
 // Warn mocks base method.
-func (m *MockLogger) Warn(ctx context.Context, fields ...log.Field) {
+func (m *MockLogger) Warn(msg string, fields ...log.Field) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx}
+	varargs := []any{msg}
 	for _, a := range fields {
 		varargs = append(varargs, a)
 	}
@@ -389,8 +256,93 @@ func (m *MockLogger) Warn(ctx context.Context, fields ...log.Field) {
 }
 
 // Warn indicates an expected call of Warn.
-func (mr *MockLoggerMockRecorder) Warn(ctx any, fields ...any) *gomock.Call {
+func (mr *MockLoggerMockRecorder) Warn(msg any, fields ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx}, fields...)
+	varargs := append([]any{msg}, fields...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Warn", reflect.TypeOf((*MockLogger)(nil).Warn), varargs...)
+}
+
+// MockUnitOfWork is a mock of UnitOfWork interface.
+type MockUnitOfWork struct {
+	ctrl     *gomock.Controller
+	recorder *MockUnitOfWorkMockRecorder
+}
+
+// MockUnitOfWorkMockRecorder is the mock recorder for MockUnitOfWork.
+type MockUnitOfWorkMockRecorder struct {
+	mock *MockUnitOfWork
+}
+
+// NewMockUnitOfWork creates a new mock instance.
+func NewMockUnitOfWork(ctrl *gomock.Controller) *MockUnitOfWork {
+	mock := &MockUnitOfWork{ctrl: ctrl}
+	mock.recorder = &MockUnitOfWorkMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockUnitOfWork) EXPECT() *MockUnitOfWorkMockRecorder {
+	return m.recorder
+}
+
+// Commit mocks base method.
+func (m *MockUnitOfWork) Commit(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Commit", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Commit indicates an expected call of Commit.
+func (mr *MockUnitOfWorkMockRecorder) Commit(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*MockUnitOfWork)(nil).Commit), ctx)
+}
+
+// CreateInvoices mocks base method.
+func (m *MockUnitOfWork) CreateInvoices(invoices []entities.Invoice, template entities.InvoiceTemplate) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "CreateInvoices", invoices, template)
+}
+
+// CreateInvoices indicates an expected call of CreateInvoices.
+func (mr *MockUnitOfWorkMockRecorder) CreateInvoices(invoices, template any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInvoices", reflect.TypeOf((*MockUnitOfWork)(nil).CreateInvoices), invoices, template)
+}
+
+// DeleteInvoice mocks base method.
+func (m *MockUnitOfWork) DeleteInvoice(id uint64) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "DeleteInvoice", id)
+}
+
+// DeleteInvoice indicates an expected call of DeleteInvoice.
+func (mr *MockUnitOfWorkMockRecorder) DeleteInvoice(id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInvoice", reflect.TypeOf((*MockUnitOfWork)(nil).DeleteInvoice), id)
+}
+
+// DeleteTemplate mocks base method.
+func (m *MockUnitOfWork) DeleteTemplate(id uint64) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "DeleteTemplate", id)
+}
+
+// DeleteTemplate indicates an expected call of DeleteTemplate.
+func (mr *MockUnitOfWorkMockRecorder) DeleteTemplate(id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTemplate", reflect.TypeOf((*MockUnitOfWork)(nil).DeleteTemplate), id)
+}
+
+// UpdateInvoice mocks base method.
+func (m *MockUnitOfWork) UpdateInvoice(invoice entities.Invoice) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "UpdateInvoice", invoice)
+}
+
+// UpdateInvoice indicates an expected call of UpdateInvoice.
+func (mr *MockUnitOfWorkMockRecorder) UpdateInvoice(invoice any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateInvoice", reflect.TypeOf((*MockUnitOfWork)(nil).UpdateInvoice), invoice)
 }
